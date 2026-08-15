@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600;1,700&family=Playball&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-maroon: #4a1620;
+  --color-cream: #f0e4c8;
+  --color-gold: #d4af37;
+
+  --font-script: "Playball", cursive;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-maroon);
+  font-family: var(--font-display);
+}
