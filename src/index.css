@@ -10,6 +10,15 @@
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
 }
 
+html {
+  /* Selalu sediakan ruang scrollbar, walau belum kepakai (misal sebelum
+     mekanisme pin/scroll-zoom aktif). Tanpa ini, begitu halaman berubah
+     dari "belum bisa discroll" jadi "bisa discroll" (munculnya scrollbar),
+     lebar viewport berubah dikit dan bikin konten yang di-center kelihatan
+     "kegeser". */
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   background-color: var(--color-maroon);

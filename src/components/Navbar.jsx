@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
 
 const NAV_LINKS = [
   { label: 'About', href: '#about' },
@@ -11,76 +8,46 @@ const NAV_LINKS = [
   { label: 'Contact', href: '#contact' },
 ]
 
-// Jarak scroll (px) sebelum navbar berubah dari bar rata (menyatu dengan
-// background) menjadi kapsul mengambang.
-const FLOAT_THRESHOLD = 72
-
-// Wrapper mengatur gutter (jarak dari tepi kiri-kanan layar) dan jarak dari
-// atas. Nav mengatur tampilan visual kapsulnya sendiri (radius, warna, blur).
-const WRAPPER_FLAT = { paddingLeft: 0, paddingRight: 0, paddingTop: 0 }
-const WRAPPER_FLOATING = { paddingLeft: 20, paddingRight: 20, paddingTop: 16 }
-
-const NAV_FLAT = {
-  borderRadius: 0,
-  paddingLeft: 40,
-  paddingRight: 40,
-  paddingTop: 22,
-  paddingBottom: 22,
-  backgroundColor: 'rgba(10, 6, 8, 0)',
-  borderColor: 'rgba(212, 175, 55, 0)',
-  backdropFilter: 'blur(0px)',
-  boxShadow: '0 20px 45px -28px rgba(0, 0, 0, 0)',
-}
-
-const NAV_FLOATING = {
-  borderRadius: 999,
-  paddingLeft: 32,
-  paddingRight: 32,
-  paddingTop: 14,
-  paddingBottom: 14,
-  backgroundColor: 'rgba(10, 6, 8, 0.55)',
-  borderColor: 'rgba(212, 175, 55, 0.22)',
-  backdropFilter: 'blur(20px)',
-  boxShadow: '0 20px 45px -18px rgba(0, 0, 0, 0.65)',
-}
-
-function Navbar() {
-  const wrapperRef = useRef(null)
+function Navbar({ visible = false }) {
   const navRef = useRef(null)
 
+  // Navbar disembunyikan total di awal (opacity 0 + sedikit turun), baru
+  // dimunculkan/disembunyikan lewat prop `visible` dari App. Tidak ada lagi
+  // efek kapsul-mengambang saat scroll - navbar cuma satu bentuk (bar rata,
+  // transparan menyatu dengan background), dan tugasnya cuma muncul/hilang.
   useEffect(() => {
-    const wrapper = wrapperRef.current
-    const nav = navRef.current
-
-    gsap.set(wrapper, WRAPPER_FLAT)
-    gsap.set(nav, NAV_FLAT)
-
-    const context = gsap.context(() => {
-      const toFloating = () => {
-        gsap.to(wrapper, { ...WRAPPER_FLOATING, duration: 0.6, ease: 'power3.out' })
-        gsap.to(nav, { ...NAV_FLOATING, duration: 0.6, ease: 'power3.out' })
-      }
-
-      const toFlat = () => {
-        gsap.to(wrapper, { ...WRAPPER_FLAT, duration: 0.5, ease: 'power3.out' })
-        gsap.to(nav, { ...NAV_FLAT, duration: 0.5, ease: 'power3.out' })
-      }
-
-      ScrollTrigger.create({
-        start: `top -${FLOAT_THRESHOLD}`,
-        onEnter: toFloating,
-        onLeaveBack: toFlat,
-      })
-    }, wrapper)
-
-    return () => context.revert()
+    gsap.set(navRef.current, { opacity: 0, y: -16, pointerEvents: 'none' })
   }, [])
 
+  useEffect(() => {
+    const nav = navRef.current
+
+    if (visible) {
+      gsap.to(nav, {
+        opacity: 1,
+        y: 0,
+        pointerEvents: 'auto',
+        duration: 0.7,
+        ease: 'power3.out',
+        overwrite: 'auto',
+      })
+    } else {
+      gsap.to(nav, {
+        opacity: 0,
+        y: -16,
+        pointerEvents: 'none',
+        duration: 0.4,
+        ease: 'power3.out',
+        overwrite: 'auto',
+      })
+    }
+  }, [visible])
+
   return (
-    <div ref={wrapperRef} className="fixed inset-x-0 top-0 z-50">
+    <div className="fixed inset-x-0 top-0 z-50">
       <nav
         ref={navRef}
-        className="mx-auto flex w-full max-w-6xl items-center justify-between border border-transparent"
+        className="mx-auto flex w-full max-w-6xl items-center justify-between px-10 py-6"
       >
         <a
           href="#hero"
