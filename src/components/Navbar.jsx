@@ -10,11 +10,39 @@ const NAV_LINKS = [
 
 function Navbar({ visible = false }) {
   const navRef = useRef(null)
+  const logoRef = useRef(null)
+  const logoTextRef = useRef(null)
+
+  // Efek Magnetic Hover pada Logo
+  const handleMouseMove = (e) => {
+    const rect = logoRef.current.getBoundingClientRect()
+    // Hitung posisi kursor relatif terhadap titik tengah logo
+    const x = e.clientX - (rect.left + rect.width / 2)
+    const y = e.clientY - (rect.top + rect.height / 2)
+
+    // Tarik elemen teks ke arah kursor dengan kekuatan 35%
+    gsap.to(logoTextRef.current, {
+      x: x * 0.35,
+      y: y * 0.35,
+      duration: 0.3,
+      ease: 'power2.out',
+      overwrite: 'auto',
+    })
+  }
+
+  const handleMouseLeave = () => {
+    // Kembalikan logo ke tengah dengan efek pegas/spring yang kenyal (elastic)
+    gsap.to(logoTextRef.current, {
+      x: 0,
+      y: 0,
+      duration: 0.85,
+      ease: 'elastic.out(1, 0.4)',
+      overwrite: 'auto',
+    })
+  }
 
   // Navbar disembunyikan total di awal (opacity 0 + sedikit turun), baru
-  // dimunculkan/disembunyikan lewat prop `visible` dari App. Tidak ada lagi
-  // efek kapsul-mengambang saat scroll - navbar cuma satu bentuk (bar rata,
-  // transparan menyatu dengan background), dan tugasnya cuma muncul/hilang.
+  // dimunculkan/disembunyikan lewat prop `visible` dari App.
   useEffect(() => {
     gsap.set(navRef.current, { opacity: 0, y: -16, pointerEvents: 'none' })
   }, [])
@@ -50,10 +78,18 @@ function Navbar({ visible = false }) {
         className="mx-auto flex w-full max-w-6xl items-center justify-between px-10 py-6"
       >
         <a
+          ref={logoRef}
           href="#hero"
-          className="whitespace-nowrap font-script text-2xl leading-none text-cream"
+          className="group relative inline-block py-2 select-none"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          MhmmdWiraHadi
+          <span
+            ref={logoTextRef}
+            className="inline-block whitespace-nowrap font-script text-2xl leading-none text-cream transition-colors duration-300"
+          >
+            MhmmdWiraHadi
+          </span>
         </a>
 
         <ul className="hidden items-center gap-8 md:flex">
@@ -61,7 +97,7 @@ function Navbar({ visible = false }) {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-sm uppercase tracking-[0.2em] text-cream/75 transition-colors duration-300 hover:text-gold"
+                className="relative py-1 text-sm uppercase tracking-[0.2em] text-cream after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-cream after:transition-transform after:duration-300 after:will-change-transform hover:after:origin-left hover:after:scale-x-100"
               >
                 {link.label}
               </a>

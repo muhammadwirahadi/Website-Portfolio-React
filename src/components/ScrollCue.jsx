@@ -26,11 +26,11 @@ function ScrollCue({ visible = false }) {
 
       gsap.set(dot, { y: 0, opacity: 1 })
       gsap.to(dot, {
-        y: 18,
+        y: 12,
         opacity: 0,
-        duration: 1.1,
+        duration: 1.2,
         repeat: -1,
-        ease: 'power1.in',
+        ease: 'power1.inOut',
       })
 
       // Hilang begitu user mulai scroll, muncul lagi kalau scroll balik ke atas.
@@ -47,15 +47,18 @@ function ScrollCue({ visible = false }) {
   return (
     <div
       ref={rootRef}
-      className="pointer-events-none absolute inset-x-0 bottom-10 z-10 flex flex-col items-center gap-3 text-cream/70"
+      className="pointer-events-none absolute inset-x-0 bottom-10 z-10 flex items-center justify-center gap-4 text-cream/70"
     >
-      <span className="text-[11px] uppercase tracking-[0.3em]">Scroll</span>
-      <span className="relative h-9 w-px overflow-hidden bg-cream/20">
-        <span
+      <span className="text-[10px] uppercase tracking-[0.3em] font-mono text-cream/50">Scroll</span>
+      {/* Bentuk Mouse */}
+      <div className="relative h-9 w-[22px] rounded-full border border-cream/30">
+        {/* Roda Mouse (Scroll Wheel) yang bergerak turun */}
+        <div
           ref={dotRef}
-          className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gold"
+          className="absolute left-1/2 top-2 h-2.5 w-1.5 -translate-x-1/2 rounded-full bg-gold"
         />
-      </span>
+      </div>
+      <span className="text-[10px] uppercase tracking-[0.3em] font-mono text-cream/50">Down</span>
     </div>
   )
 }

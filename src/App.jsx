@@ -5,6 +5,8 @@ import Navbar from './components/Navbar'
 import Constellation from './components/Constellation'
 import Sparkles from './components/Sparkles'
 import ScrollCue from './components/ScrollCue'
+import CustomCursor from './components/CustomCursor'
+import About from './components/About'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -105,7 +107,7 @@ function App() {
         // mepet ke akhir, supaya zoom-nya benar-benar selesai (layar sudah
         // penuh cahaya bintang) baru transisi warnanya jalan.
         .to(overlayRef.current, { opacity: 1, ease: 'none', duration: 0.06 }, 0.94)
-        .to(aboutContentRef.current, { opacity: 1, ease: 'none', duration: 0.03 }, 0.985)
+        .to(aboutContentRef.current, { opacity: 1, pointerEvents: 'auto', ease: 'none', duration: 0.03 }, 0.985)
     }, heroSectionRef)
 
     return () => context.revert()
@@ -113,6 +115,7 @@ function App() {
 
   return (
     <main className="bg-maroon text-cream">
+      <CustomCursor />
       <Navbar visible={navbarVisible} />
 
       {/* Hero - dikunci di layar (pinned) selama proses zoom scroll ke
@@ -120,11 +123,13 @@ function App() {
           dalam Hero yang sama (fade-in di akhir), BUKAN section terpisah
           yang di-reveal dengan lanjut scroll ke bawah. */}
       <section ref={heroSectionRef} id="hero" className="relative h-screen overflow-hidden">
+        {/* Lapisan bintang dekorasi latar (canvas particle) - diletakkan di luar
+            elemen zoom & pan agar tidak terjadi blurring/pixelasi pada canvas,
+            sekaligus menciptakan efek kedalaman (parallax) yang mewah. */}
+        <Sparkles className="absolute inset-0 h-full w-full" />
+
         <div ref={heroPanRef} className="absolute inset-0 h-full w-full">
           <div ref={heroVisualsRef} className="absolute inset-0 h-full w-full">
-            {/* Lapisan bintang dekorasi latar (canvas particle) - di belakang. */}
-            <Sparkles className="absolute inset-0 h-full w-full" />
-
             {/* Rasi bintang Aries - lapisan depan, sekaligus target zoom. */}
             <Constellation
               className="absolute inset-0 h-full w-full"
@@ -140,15 +145,13 @@ function App() {
           className="pointer-events-none absolute inset-0 z-20 bg-cream opacity-0"
         />
 
-        {/* Konten About (placeholder) - fade-in di atas overlay, bukan
-            section terpisah. Kontennya nanti diganti yang sesungguhnya. */}
+        {/* Konten About sesungguhnya - fade-in di atas overlay, bukan
+            section terpisah yang di-reveal lewat scroll ke bawah. */}
         <div
           ref={aboutContentRef}
-          className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center opacity-0"
+          className="pointer-events-none absolute inset-0 z-30 opacity-0"
         >
-          <p className="text-sm uppercase tracking-[0.3em] text-maroon">
-            Section About menyusul di sini
-          </p>
+          <About />
         </div>
 
         <ScrollCue visible={introComplete} />

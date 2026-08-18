@@ -24,3 +24,24 @@ body {
   background-color: var(--color-maroon);
   font-family: var(--font-display);
 }
+
+/* Sembunyikan scrollbar bawaan browser namun tetap izinkan scrolling */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  -ms-overflow-style: none;  /* IE dan Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Sembunyikan kursor default di desktop agar custom cursor bisa aktif */
+@media (hover: hover) and (pointer: fine) {
+  body, 
+  a, 
+  button, 
+  [role="button"],
+  .cursor-pointer {
+    cursor: none !important;
+  }
+}
