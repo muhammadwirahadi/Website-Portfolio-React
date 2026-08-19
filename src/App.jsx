@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Navbar from './components/Navbar'
-import Constellation from './components/Constellation'
-import Sparkles from './components/Sparkles'
-import ScrollCue from './components/ScrollCue'
-import CustomCursor from './components/CustomCursor'
-import About from './components/About'
+import Navbar from './components/ui/Navbar'
+import Constellation from './components/hero/Constellation'
+import Sparkles from './components/hero/Sparkles'
+import ScrollCue from './components/hero/ScrollCue'
+import CustomCursor from './components/ui/CustomCursor'
+import About from './components/about/About'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -23,6 +23,12 @@ function App() {
   // Navbar disembunyikan lagi selama proses zoom scroll berlangsung, lalu
   // muncul kembali begitu zoom + transisi ke About selesai.
   const [navbarVisible, setNavbarVisible] = useState(false)
+
+  // Dipakai Navbar & CustomCursor untuk switch warna (cream <-> maroon),
+  // dan juga dipakai About.jsx sebagai trigger animasi masuk/reset. Dua
+  // arah - harus bisa balik ke false kalau user scroll kembali ke atas,
+  // supaya animasi About bisa terulang tiap kali balik masuk section ini.
+  const [lightTheme, setLightTheme] = useState(false)
 
   const heroSectionRef = useRef(null)
   // heroPanRef menggeser seluruh layer visual supaya titik target (bintang
@@ -90,6 +96,7 @@ function App() {
           // mulai bergerak sedikit pun.
           onUpdate: (self) => {
             setNavbarVisible(self.progress <= 0.001 || self.progress >= 0.99)
+            setLightTheme(self.progress >= 0.985)
           },
         },
       })
@@ -115,8 +122,8 @@ function App() {
 
   return (
     <main className="bg-maroon text-cream">
-      <CustomCursor />
-      <Navbar visible={navbarVisible} />
+      <CustomCursor light={lightTheme} />
+      <Navbar visible={navbarVisible} light={lightTheme} />
 
       {/* Hero - dikunci di layar (pinned) selama proses zoom scroll ke
           bintang 41 Arietis. Section About dirender sebagai overlay di
@@ -151,7 +158,7 @@ function App() {
           ref={aboutContentRef}
           className="pointer-events-none absolute inset-0 z-30 opacity-0"
         >
-          <About />
+          <About play={lightTheme} />
         </div>
 
         <ScrollCue visible={introComplete} />

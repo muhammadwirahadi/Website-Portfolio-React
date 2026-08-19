@@ -3,12 +3,17 @@ import gsap from 'gsap'
 
 const NAV_LINKS = [
   { label: 'About', href: '#about' },
-  { label: 'Skills', href: '#skills' },
+  { label: 'Experiences', href: '#experiences' },
   { label: 'Project', href: '#projects' },
   { label: 'Contact', href: '#contact' },
 ]
 
-function Navbar({ visible = false }) {
+function Navbar({ visible = false, light = false }) {
+  // Warna teks navbar dibalik ketika berada di atas background terang
+  // (section About, dst) - tanpa ini, teks cream/gold jadi hampir tidak
+  // kelihatan karena warnanya nyaris sama dengan background cream.
+  const textColorClass = light ? 'text-maroon' : 'text-cream'
+  const underlineColorClass = light ? 'after:bg-maroon' : 'after:bg-cream'
   const navRef = useRef(null)
   const logoRef = useRef(null)
   const logoTextRef = useRef(null)
@@ -75,7 +80,7 @@ function Navbar({ visible = false }) {
     <div className="fixed inset-x-0 top-0 z-50">
       <nav
         ref={navRef}
-        className="mx-auto flex w-full max-w-6xl items-center justify-between px-10 py-6"
+        className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6"
       >
         <a
           ref={logoRef}
@@ -86,7 +91,7 @@ function Navbar({ visible = false }) {
         >
           <span
             ref={logoTextRef}
-            className="inline-block whitespace-nowrap font-script text-2xl leading-none text-cream transition-colors duration-300"
+            className={`inline-block whitespace-nowrap font-script text-2xl leading-none transition-colors duration-300 ${textColorClass}`}
           >
             MhmmdWiraHadi
           </span>
@@ -97,7 +102,7 @@ function Navbar({ visible = false }) {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="relative py-1 text-sm uppercase tracking-[0.2em] text-cream after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-cream after:transition-transform after:duration-300 after:will-change-transform hover:after:origin-left hover:after:scale-x-100"
+                className={`relative py-1 text-sm uppercase tracking-[0.2em] after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:transition-transform after:duration-300 after:will-change-transform hover:after:origin-left hover:after:scale-x-100 ${textColorClass} ${underlineColorClass}`}
               >
                 {link.label}
               </a>

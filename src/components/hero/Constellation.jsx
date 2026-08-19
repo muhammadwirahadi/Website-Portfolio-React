@@ -10,7 +10,7 @@ const ARIES_STARS = [
   { id: '41-ari', x: 625, y: 370, radius: 3.2, label: '41 Arietis' },
   { id: 'hamal', x: 765, y: 440, radius: 5.4, label: 'Hamal' },
   { id: 'sheratan', x: 925, y: 530, radius: 3.8, label: 'Sheratan' },
-  { id: 'mesarthim', x: 975, y: 490, radius: 3, label: 'Mesarthim' },
+  { id: 'mesarthim', x: 965, y: 605, radius: 3, label: 'Mesarthim' },
 ]
 
 // Urutan rantai koneksi: dari bintang mana ke bintang mana garis ditarik.
@@ -271,19 +271,33 @@ function Constellation({ className = '', onIntroComplete }) {
           const from = findStar(fromId)
           const to = findStar(toId)
           return (
-            <line
-              key={`${fromId}-${toId}`}
-              data-line
-              data-line-id={`${fromId}-${toId}`}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
-              stroke="#D4AF37"
-              strokeWidth="1.4"
-              strokeOpacity="0.5"
-              strokeLinecap="round"
-            />
+            <g key={`${fromId}-${toId}`}>
+              {/* Garis konstelasi asli */}
+              <line
+                data-line
+                data-line-id={`${fromId}-${toId}`}
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                stroke="#D4AF37"
+                strokeWidth="1.4"
+                strokeOpacity="0.5"
+                strokeLinecap="round"
+              />
+              {/* Garis transparan tebal (hit area) agar mudah di-hover kursor */}
+              <line
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                stroke="transparent"
+                strokeWidth="20"
+                strokeLinecap="round"
+                className="pointer-events-auto cursor-pointer"
+                data-aries-hover
+              />
+            </g>
           )
         })}
 
