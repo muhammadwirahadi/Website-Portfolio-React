@@ -112,6 +112,7 @@ function Sparkles({
   movement = DEFAULTS.movement,
   angle = DEFAULTS.angle,
   className = '',
+  active = true,
 }) {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
@@ -124,6 +125,12 @@ function Sparkles({
     if (!canvas || !container) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    // Hentikan perhitungan & bersihkan kanvas jika tidak sedang aktif
+    if (!active) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      return
+    }
 
     const initParticles = (width, height) => {
       const particles = []
@@ -225,12 +232,13 @@ function Sparkles({
     particleSpeed,
     movement,
     angle,
+    active,
   ])
 
   return (
     <div
       ref={containerRef}
-      className={`pointer-events-none relative h-full w-full overflow-hidden ${className}`}
+      className={`pointer-events-none h-full w-full overflow-hidden ${className || 'relative'}`}
     >
       <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" />
     </div>

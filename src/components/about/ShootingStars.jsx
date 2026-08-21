@@ -1,29 +1,28 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 
-// Berapa banyak "bintang jatuh" yang jalan bersamaan.
-const STAR_COUNT = 27
+// Berapa banyak "bintang jatuh" yang jalan bersamaan (dikurangi untuk optimasi performa).
+const STAR_COUNT = 12
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min)
 }
 
 // Bintang-bintang kecil yang muncul dari kiri, melintas ke arah kanan sambil
-// meninggalkan jejak garis pudar di belakangnya. Arah vertikalnya diacak
-// dikit tiap lintasan (bukan garis horizontal lurus kaku) supaya kesannya
-// lebih organik, seperti bintang jatuh sungguhan.
-function ShootingStars({ className = '' }) {
+// meninggalkan jejak garis pudar di belakangnya.
+function ShootingStars({ className = '', active = true }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
+    if (!active) return
+
     const root = containerRef.current
     const stars = root.querySelectorAll('[data-shooting-star]')
 
     const context = gsap.context(() => {
       stars.forEach((star) => {
         // Direkursi lewat onComplete supaya tiap bintang punya lintasan baru
-        // (posisi awal, drift arah, kecepatan) setiap kali dia mengulang -
-        // bukan loop yang persis sama terus-menerus.
+        // (posisi awal, drift arah, kecepatan) setiap kali dia mengulang.
         const runLap = () => {
           const startY = randomBetween(8, 88) // posisi vertikal awal (persen)
           const verticalDrift = randomBetween(-14, 14) // deviasi arah, biar tidak lurus kaku
@@ -47,7 +46,7 @@ function ShootingStars({ className = '' }) {
     }, root)
 
     return () => context.revert()
-  }, [])
+  }, [active])
 
   return (
     <div

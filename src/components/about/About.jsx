@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import profilePhoto from '../../assets/profile.png'
-import ShootingStars from './ShootingStars'
 import CrystalGlow from './CrystalGlow'
 import RotatingText from './RotatingText'
 import LiquidHover from './LiquidHover'
@@ -12,7 +11,7 @@ import LiquidHover from './LiquidHover'
 // begitu `play` jadi false, elemen di-reset balik ke posisi "tersembunyi",
 // supaya animasi masuknya bisa terulang lagi tiap kali balik ke section ini
 // (bukan cuma sekali seumur hidup komponen).
-function About({ play = false }) {
+function About({ play = false, onAnimationComplete }) {
   const eyebrowRef = useRef(null)
   const nameRef = useRef(null)
   const roleRef = useRef(null)
@@ -32,7 +31,14 @@ function About({ play = false }) {
       return
     }
 
-    const timeline = gsap.timeline({ delay: 0.5 })
+    const timeline = gsap.timeline({
+      delay: 0.5,
+      onComplete: () => {
+        if (onAnimationComplete) {
+          onAnimationComplete()
+        }
+      },
+    })
     timeline
       .to(
         imageWrapRef.current,
@@ -66,10 +72,6 @@ function About({ play = false }) {
 
   return (
     <div className="relative h-full w-full">
-      {/* Texture background - bintang jatuh tipis melintas ke kanan,
-          opacity rendah supaya cuma jadi "suasana", bukan elemen utama. */}
-      <ShootingStars />
-
       <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-between gap-6 px-6 text-center md:flex-row md:text-left">
         <div className="max-w-xl">
           <p ref={eyebrowRef} className="text-sm uppercase tracking-[0.3em] text-maroon/70">
@@ -106,7 +108,7 @@ function About({ play = false }) {
           </div>
 
           <p ref={bioRef} className="mt-4 text-base text-justify leading-relaxed text-maroon/80">
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Tempore eos dicta quos, accusamus est quasi veritatis numquam. Magni sapiente autem molestias soluta facilis! A neque voluptatibus iste dolorum, quidem quas?
+            Welcome to my profile. I'm Muhammad Wira Hadi, a Full Stack Developer based in Jakarta, Indonesia, with six months of internship experience in web development. As a fresh graduate, I'm open to job opportunities and collaborations as a Frontend, Backend, or Full Stack Developer.
           </p>
         </div>
 

@@ -7,6 +7,8 @@ import Sparkles from './components/hero/Sparkles'
 import ScrollCue from './components/hero/ScrollCue'
 import CustomCursor from './components/ui/CustomCursor'
 import About from './components/about/About'
+import Education from './components/about/Education'
+import ShootingStars from './components/about/ShootingStars'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -24,11 +26,16 @@ function App() {
   // muncul kembali begitu zoom + transisi ke About selesai.
   const [navbarVisible, setNavbarVisible] = useState(false)
 
-  // Dipakai Navbar & CustomCursor untuk switch warna (cream <-> maroon),
-  // dan juga dipakai About.jsx sebagai trigger animasi masuk/reset. Dua
-  // arah - harus bisa balik ke false kalau user scroll kembali ke atas,
-  // supaya animasi About bisa terulang tiap kali balik masuk section ini.
+  // Dipakai Navbar & CustomCursor untuk switch warna (cream <-> maroon).
   const [lightTheme, setLightTheme] = useState(false)
+
+  // Mengontrol pemutaran animasi masuk (slide-in) konten About.
+  // Dipisahkan dari lightTheme agar animasi teks & gambar baru mulai diputar
+  // SETELAH kontainer About memudar masuk 100% solid (tidak blur lagi).
+  const [aboutPlay, setAboutPlay] = useState(false)
+
+  // Menyimpan status selesainya animasi masuk About untuk memicu ScrollCue
+  const [aboutAnimCompletedState, setAboutAnimCompletedState] = useState(false)
 
   const heroSectionRef = useRef(null)
   // heroPanRef menggeser seluruh layer visual supaya titik target (bintang
@@ -38,11 +45,95 @@ function App() {
   // bintangnya tidak "geser" aneh saat membesar.
   const heroPanRef = useRef(null)
   const heroVisualsRef = useRef(null)
-  const overlayRef = useRef(null)
+  const secondaryOverlayRef = useRef(null)
   const aboutContentRef = useRef(null)
+  
+  const scrollTriggerRef = useRef(null)
+  const aboutAnimCompleted = useRef(false)
+  const isLockedDown = useRef(false)
+
+  const handleAboutAnimComplete = () => {
+    aboutAnimCompleted.current = true
+    isLockedDown.current = false
+    setAboutAnimCompletedState(true)
+  }
 
   useEffect(() => {
-    if (introComplete) setNavbarVisible(true)
+    const getLockScroll = () => {
+      const st = scrollTriggerRef.current
+      if (!st) return 0
+      return Math.round(st.start + (st.end - st.start) * 0.80)
+    }
+
+    const handleWheel = (e) => {
+      const lockScroll = getLockScroll()
+      if (lockScroll && e.deltaY > 0 && !aboutAnimCompleted.current) {
+        if (window.scrollY >= lockScroll - 5) {
+          e.preventDefault()
+          window.scrollTo(0, lockScroll)
+        }
+      }
+    }
+
+    let touchStartY = 0
+    const handleTouchStart = (e) => {
+      touchStartY = e.touches[0].clientY
+    }
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length > 0) {
+        const touchEndY = e.touches[0].clientY
+        const deltaY = touchStartY - touchEndY
+        const lockScroll = getLockScroll()
+        if (lockScroll && deltaY > 0 && !aboutAnimCompleted.current) {
+          if (window.scrollY >= lockScroll - 5) {
+            e.preventDefault()
+            window.scrollTo(0, lockScroll)
+          }
+        }
+      }
+    }
+
+    const handleKeyDown = (e) => {
+      const scrollDownKeys = [32, 34, 35, 40] // Space, PageDown, End, DownArrow
+      const lockScroll = getLockScroll()
+      if (lockScroll && scrollDownKeys.includes(e.keyCode) && !aboutAnimCompleted.current) {
+        if (window.scrollY >= lockScroll - 5) {
+          e.preventDefault()
+          window.scrollTo(0, lockScroll)
+        }
+      }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('keydown', handleKeyDown, { passive: false })
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (introComplete) {
+      setNavbarVisible(true)
+      // Kembalikan overflow body ke normal agar halaman bisa di-scroll kembali
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    } else {
+      // Sembunyikan overflow dan kunci scroll sepenuhnya selama animasi garis rasi menyatu
+      document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
   }, [introComplete])
 
   // Pin + zoom baru di-setup setelah intro selesai, supaya urutannya jelas:
@@ -85,36 +176,52 @@ function App() {
         scrollTrigger: {
           trigger: heroSectionRef.current,
           start: 'top top',
-          end: '+=280%',
-          scrub: 2,
+          end: '+=250%', // Total scroll ditambah sedikit untuk menciptakan buffer zone di bawah
+          scrub: 1,
           pin: true,
           pinSpacing: true,
-          // Progress-based (bukan onEnter/onLeave) supaya tidak salah
-          // ke-trigger begitu ScrollTrigger pertama kali di-setup (karena
-          // Hero ada persis di posisi scroll 0, start-nya otomatis "sudah
-          // terpenuhi" sejak awal). Navbar langsung hilang begitu scroll
-          // mulai bergerak sedikit pun.
           onUpdate: (self) => {
-            setNavbarVisible(self.progress <= 0.001 || self.progress >= 0.99)
-            setLightTheme(self.progress >= 0.985)
+            setNavbarVisible(self.progress <= 0.001 || self.progress >= 0.80)
+            setLightTheme(self.progress >= 0.76)
+            setAboutPlay(self.progress >= 0.80)
+
+            // Mengunci scroll ke bawah jika animasi masuk About belum selesai (kunci di progress 80%)
+            if (self.progress >= 0.80) {
+              if (!aboutAnimCompleted.current) {
+                isLockedDown.current = true
+
+                const lockScroll = Math.round(self.start + (self.end - self.start) * 0.80)
+                if (Math.abs(self.scroll() - lockScroll) > 2) {
+                  self.scroll(lockScroll)
+                }
+              } else {
+                // Sembunyikan petunjuk scroll jika meluncur ke bawah (progress > 0.82)
+                // Munculkan kembali jika scroll balik ke atas ke halaman About (progress <= 0.82)
+                setAboutAnimCompletedState(self.progress <= 0.82)
+              }
+            } else if (self.progress < 0.70) {
+              // Reset status animasi jika scroll kembali ke atas (kembali ke rasi bintang)
+              aboutAnimCompleted.current = false
+              isLockedDown.current = false
+              setAboutAnimCompletedState(false)
+            }
           },
         },
       })
 
+      scrollTriggerRef.current = timeline.scrollTrigger
+
       timeline
-        // Zoom besar-besaran - dinaikkan jauh lebih tinggi (100x) supaya
-        // bukan cuma "ikonnya" yang membesar, tapi halo cahaya lembut di
-        // sekitarnya (yang bentuknya lingkaran penuh, bukan bintang bercabang)
-        // ikut membesar sampai benar-benar membanjiri seluruh layar - jarak
-        // scroll (+=220%) juga diperpanjang supaya prosesnya kerasa lebih
-        // panjang/smooth, bukan buru-buru.
+        // Zoom rasi bintang Aries
         .to(heroPanRef.current, { x: deltaX, y: deltaY, ease: 'none', duration: 1 }, 0)
-        .to(heroVisualsRef.current, { scale: 300, ease: 'none', duration: 1 }, 0)
-        // Overlay & konten About baru mulai muncul di 94%-100% - jauh lebih
-        // mepet ke akhir, supaya zoom-nya benar-benar selesai (layar sudah
-        // penuh cahaya bintang) baru transisi warnanya jalan.
-        .to(overlayRef.current, { opacity: 1, ease: 'none', duration: 0.06 }, 0.94)
-        .to(aboutContentRef.current, { opacity: 1, pointerEvents: 'auto', ease: 'none', duration: 0.03 }, 0.985)
+        .to(heroVisualsRef.current, { scale: 330, ease: 'none', duration: 1 }, 0)
+        // 1. Latar belakang krem memudar masuk dari 70% ke 76%
+        .to(secondaryOverlayRef.current, { opacity: 1, ease: 'none', duration: 0.06 }, 0.70)
+        // 2. Rasi bintang memudar keluar setelah background krem di belakangnya sudah solid (76% ke 77%)
+        .to(heroPanRef.current, { opacity: 0, ease: 'none', duration: 0.01 }, 0.76)
+        .to(heroPanRef.current, { pointerEvents: 'none', duration: 0.01 }, 0.76)
+        // 3. Konten About memudar masuk setelah rasi bintang hilang (77% ke 79%)
+        .to(aboutContentRef.current, { opacity: 1, pointerEvents: 'auto', ease: 'none', duration: 0.02 }, 0.77)
     }, heroSectionRef)
 
     return () => context.revert()
@@ -125,19 +232,22 @@ function App() {
       <CustomCursor light={lightTheme} />
       <Navbar visible={navbarVisible} light={lightTheme} />
 
-      {/* Hero - dikunci di layar (pinned) selama proses zoom scroll ke
-          bintang 41 Arietis. Section About dirender sebagai overlay di
-          dalam Hero yang sama (fade-in di akhir), BUKAN section terpisah
-          yang di-reveal dengan lanjut scroll ke bawah. */}
-      <section ref={heroSectionRef} id="hero" className="relative h-screen overflow-hidden">
-        {/* Lapisan bintang dekorasi latar (canvas particle) - diletakkan di luar
-            elemen zoom & pan agar tidak terjadi blurring/pixelasi pada canvas,
-            sekaligus menciptakan efek kedalaman (parallax) yang mewah. */}
-        <Sparkles className="absolute inset-0 h-full w-full" />
+      {/* Secondary Fixed Cream Background - FIXED di viewport z-10 */}
+      <div
+        ref={secondaryOverlayRef}
+        className="pointer-events-none fixed inset-0 z-10 bg-cream opacity-0"
+      >
+        <ShootingStars active={lightTheme} />
+      </div>
 
-        <div ref={heroPanRef} className="absolute inset-0 h-full w-full">
+      {/* Section Hero - Pinned container z-20 (normal pointer events!) */}
+      <section ref={heroSectionRef} id="hero" className="relative z-20 h-screen overflow-hidden bg-transparent">
+        {/* 1. Lapisan bintang dekorasi latar - absolute z-0 */}
+        <Sparkles className="pointer-events-none absolute inset-0 z-0 h-full w-full" active={!lightTheme} />
+
+        {/* 2. Rasi bintang Aries - absolute z-5 */}
+        <div ref={heroPanRef} className="absolute inset-0 z-5 h-full w-full">
           <div ref={heroVisualsRef} className="absolute inset-0 h-full w-full">
-            {/* Rasi bintang Aries - lapisan depan, sekaligus target zoom. */}
             <Constellation
               className="absolute inset-0 h-full w-full"
               onIntroComplete={() => setIntroComplete(true)}
@@ -145,24 +255,22 @@ function App() {
           </div>
         </div>
 
-        {/* Overlay warna cream - transparan di awal, memudar masuk jadi
-            solid menjelang akhir zoom, jadi latar untuk konten About. */}
-        <div
-          ref={overlayRef}
-          className="pointer-events-none absolute inset-0 z-20 bg-cream opacity-0"
-        />
-
-        {/* Konten About sesungguhnya - fade-in di atas overlay, bukan
-            section terpisah yang di-reveal lewat scroll ke bawah. */}
+        {/* 4. Konten About sesungguhnya - fade-in di atas overlay */}
         <div
           ref={aboutContentRef}
           className="pointer-events-none absolute inset-0 z-30 opacity-0"
         >
-          <About play={lightTheme} />
+          <About play={aboutPlay} onAnimationComplete={handleAboutAnimComplete} />
+          
+          {/* Petunjuk scroll khusus halaman About (muncul setelah animasi selesai) */}
+          <ScrollCue visible={aboutAnimCompletedState} light={true} disableScrollTrigger={true} />
         </div>
 
         <ScrollCue visible={introComplete} />
       </section>
+
+      {/* Section lanjutan setelah About (Education, Skills, dst) */}
+      <Education />
     </main>
   )
 }
