@@ -17,11 +17,23 @@ Panduan konteks untuk Claude saat membantu mengerjakan project ini. Baca file in
 ```
 website-portfolio/
 ├── src/
+│   ├── assets/
+│   │   └── profile.png       - foto profil Wira
 │   ├── components/
-│   │   ├── Navbar.jsx        - bar navigasi, fade in/out dikontrol App
-│   │   ├── Constellation.jsx - rasi bintang Aries (SVG) + semua interaksinya
-│   │   ├── Sparkles.jsx      - canvas particle "stardust" (background dekorasi)
-│   │   └── ScrollCue.jsx     - indikator "scroll" di Hero, hilang saat discroll
+│   │   ├── hero/
+│   │   │   ├── Constellation.jsx - rasi bintang Aries (SVG) + semua interaksinya
+│   │   │   ├── Sparkles.jsx      - canvas particle "stardust" (background dekorasi)
+│   │   │   └── ScrollCue.jsx     - indikator "scroll" di Hero/About
+│   │   ├── about/
+│   │   │   ├── About.jsx         - konten About Me, memicu LiquidHover & RotatingText
+│   │   │   ├── Education.jsx     - seksi pendidikan, animasi hibrida scrub & play-once
+│   │   │   ├── CrystalGlow.jsx   - efek text glow / interaksi cahaya
+│   │   │   ├── LiquidHover.jsx   - WebGL shader fluid simulation untuk foto avatar
+│   │   │   ├── RotatingText.jsx  - animasi teks berganti/berputar (Role/Title)
+│   │   │   └── ShootingStars.jsx - background bintang jatuh di halaman krem
+│   │   └── ui/
+│   │       ├── Navbar.jsx        - bar navigasi transparan
+│   │       └── CustomCursor.jsx  - custom kursor dinamis (cream <-> maroon)
 │   ├── App.jsx                - orkestrator utama: intro -> pin+zoom -> fade ke About
 │   ├── main.jsx
 │   └── index.css
@@ -30,7 +42,7 @@ website-portfolio/
 └── package.json
 ```
 
-Section lain (About isi sungguhan, Skills, Projects, Experience, Hobbies, Contact) **belum dibangun** — masih placeholder teks di dalam `App.jsx`.
+Seksi About dan Education sudah selesai dibangun secara penuh. Seksi Skills, Projects, Experience, Hobbies, dan Contact masih dalam tahap pengembangan.
 
 ## Alur Hero — Scrollytelling Utama (PENTING, baca sebelum mengubah App.jsx)
 
@@ -109,23 +121,34 @@ User secara eksplisit ingin kode dan tampilan terasa seperti buatan **developer 
 - [x] Install GSAP + ScrollTrigger
 - [x] Install Lenis (belum di-init/dipakai — lihat catatan di Tech Stack)
 - [x] Setup color palette & font
-- [x] Navbar (fade in/out, tanpa efek kapsul-mengambang lagi — cuma bar transparan yang muncul/hilang)
+- [x] Navbar (fade in/out, berubah menjadi Hamburger Menu saat di-scroll, Drawer Panel interaktif dari kanan dengan staggered animation)
 - [x] Constellation rasi Aries — reveal berantai, twinkle, hover interaktif (label nama bintang custom, bukan tooltip browser)
 - [x] Sparkles — background particle dekoratif (canvas)
 - [x] ScrollCue — indikator scroll
 - [x] Hero scroll-zoom sequence lengkap: intro → pin → zoom ke 41 Arietis → fade ke About
-- [ ] Isi section About sungguhan (masih placeholder teks doang)
-- [ ] Section Skills, Projects, Experience (opsional), Hobbies, Contact — belum dibangun sama sekali
-- [ ] Putuskan nasib Lenis: dipakai beneran (integrasi ke ScrollTrigger.update) atau dicopot dari dependency kalau ternyata tidak diperlukan
-- [ ] Konten asli tiap section (lihat bagian Konten di bawah)
+- [x] Optimasi Performa Zoom: menambahkan `display: 'none'` pada rasi bintang saat fade-out agar tidak membebani layout tree browser ketika masuk seksi di bawahnya
+- [x] Isi seksi About sungguhan (menggunakan profile photo, CrystalGlow, RotatingText, dan LiquidHover WebGL shader fluid)
+- [x] Isi seksi Education sungguhan (animasi hibrida scrubbed dan play-once: label fade-in, line draw, univ name letter-drop, dan details slide-in)
+- [ ] Seksi Skills (halaman berikutnya setelah Education)
+- [ ] Seksi Projects (magmag Badilag, LSF, dsb.)
+- [ ] Seksi Experience (menggunakan konsep Navigasi Antarbintang setelah Skills)
+- [ ] Seksi Hobbies & Contact
+- [ ] Putuskan nasib Lenis: dipakai beneran (integrasi ke ScrollTrigger.update) atau dicopot dari dependency jika tidak diperlukan
 
-## Konten (isi setelah didiskusikan dengan user)
+## Konsep Berjalan Antar Bintang (Interstellar Navigation) — Rencana Rantai Transisi
 
-- Nama: Wira (logo Navbar), kemungkinan nama lengkap **Muhammad Wira Hadi** — perlu dikonfirmasi ulang untuk Hero
-- Role/Title: kemungkinan **Full Stack Developer** (berdasarkan pengalaman: backend sistem pendaftaran magang Badilag + seluruh web pendaftaran magang LSF) — belum final
-- Tagline: belum diputuskan (beberapa draft sempat ditawarkan, belum dipilih)
-- About (deskripsi singkat): belum diisi
-- Skills/Tech stack: belum diisi
-- Projects: minimal termasuk **Badilag** (backend sistem pendaftaran magang instansi pemerintah) dan **LSF** (seluruh web pendaftaran magang) — detail deskripsi/link belum dikumpulkan
-- Hobbies: belum diisi
-- Contact (email, sosial media): belum diisi
+Konsep ini dirancang untuk transisi dari seksi **Skills** menuju seksi **Experience**:
+1. **Picu/Trigger**: Di bawah seksi Skills, akan ada sub-seksi bertuliskan *"Mau ke halaman Experiences?"* dengan tombol dan deteksi scroll.
+2. **Zoom Out (Kembali ke Antariksa)**: Latar belakang krem memudar keluar kembali ke antariksa gelap. Kamera melakukan zoom out (`scale: 330` -> `50` atau `30`) berpusat di **41 Arietis** (`41-ari`), menampilkan rasi Aries seutuhnya kembali.
+3. **Panning Jalur Rasi (41-ari -> Hamal)**: Kamera meluncur mengikuti garis penghubung dari bintang **41 Arietis** (`x: 625, y: 370`) menuju bintang terterang, **Hamal** (`x: 765, y: 440`), menempatkan bintang Hamal persis di tengah viewport.
+4. **Zoom In (Masuk ke Experience)**: Kamera men-zoom masuk secara dramatis berpusat pada bintang **Hamal** (`scale: 330`), latar belakang krem memudar masuk, lalu menampilkan seksi **Experiences** di atasnya.
+
+## Konten Aktual (Kondisi Saat Ini)
+
+- **Nama**: Muhammad Wira Hadi (ditampilkan dengan efek cahaya `CrystalGlow.jsx` di seksi About)
+- **Role/Title**: Web Developer, Full Stack Developer, Junior Developer (ditampilkan berputar lewat `RotatingText.jsx` di seksi About)
+- **Tentang**: Full Stack Developer berbasis di Jakarta dengan pengalaman magang 6 bulan. Lulusan dari Universitas Bina Sarana Informatika (Informatics, IPK 3.96).
+- **Pendidikan**: Universitas Bina Sarana Informatika • Bachelor of Informatics • Jakarta, Indonesia • 2022 - 2026 • IPK 3.96.
+- **Proyek Pengalaman**:
+  * **Badilag**: Pembuatan backend sistem pendaftaran magang instansi pemerintah.
+  * **LSF**: Pembuatan seluruh web pendaftaran magang.

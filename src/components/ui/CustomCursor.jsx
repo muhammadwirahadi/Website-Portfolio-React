@@ -10,11 +10,13 @@ function CustomCursor({ light = false }) {
   const textRef = useRef(null)
   const ariesRef = useRef(null)
 
+  const [isOverDrawer, setIsOverDrawer] = useState(false)
+
   // Warna aksen kursor dibalik saat berada di atas background terang
-  // (section About, dst) - versi gold/cream nyaris tak kelihatan di atas
-  // cream, jadi diganti maroon untuk kontras yang jelas.
-  const accentColor = light ? '#4A1620' : '#F0E4C8'
-  const idleTintColor = light ? 'rgba(74, 22, 32, 0.08)' : 'rgba(240, 228, 200, 0.1)'
+  // (tetapi jika di atas drawer menu, kembalikan ke warna cream/gold agar kontras)
+  const isDarkBg = !light || isOverDrawer
+  const accentColor = isDarkBg ? '#F0E4C8' : '#4A1620'
+  const idleTintColor = isDarkBg ? 'rgba(240, 228, 200, 0.1)' : 'rgba(74, 22, 32, 0.08)'
   
   const [isHovered, setIsHovered] = useState(false)
   const [isAriesHovered, setIsAriesHovered] = useState(false)
@@ -87,6 +89,10 @@ function CustomCursor({ light = false }) {
 
       const isAriesLine = target.closest('[data-aries-hover]')
       setIsAriesHovered(!!isAriesLine)
+
+      // Cek apakah kursor berada di atas menu drawer
+      const isDrawer = target.closest('[data-drawer-menu]')
+      setIsOverDrawer(!!isDrawer)
     }
 
     window.addEventListener('mouseover', handleMouseOver)

@@ -25,6 +25,7 @@ function App() {
   // Navbar disembunyikan lagi selama proses zoom scroll berlangsung, lalu
   // muncul kembali begitu zoom + transisi ke About selesai.
   const [navbarVisible, setNavbarVisible] = useState(false)
+  const [navbarScrolled, setNavbarScrolled] = useState(false)
 
   // Dipakai Navbar & CustomCursor untuk switch warna (cream <-> maroon).
   const [lightTheme, setLightTheme] = useState(false)
@@ -184,6 +185,7 @@ function App() {
             setNavbarVisible(self.progress <= 0.001 || self.progress >= 0.80)
             setLightTheme(self.progress >= 0.76)
             setAboutPlay(self.progress >= 0.80)
+            setNavbarScrolled(self.progress > 0.88)
 
             // Mengunci scroll ke bawah jika animasi masuk About belum selesai (kunci di progress 80%)
             if (self.progress >= 0.80) {
@@ -219,7 +221,7 @@ function App() {
         .to(secondaryOverlayRef.current, { opacity: 1, ease: 'none', duration: 0.06 }, 0.70)
         // 2. Rasi bintang memudar keluar setelah background krem di belakangnya sudah solid (76% ke 77%)
         .to(heroPanRef.current, { opacity: 0, ease: 'none', duration: 0.01 }, 0.76)
-        .to(heroPanRef.current, { pointerEvents: 'none', duration: 0.01 }, 0.76)
+        .to(heroPanRef.current, { pointerEvents: 'none', display: 'none', duration: 0.01 }, 0.76)
         // 3. Konten About memudar masuk setelah rasi bintang hilang (77% ke 79%)
         .to(aboutContentRef.current, { opacity: 1, pointerEvents: 'auto', ease: 'none', duration: 0.02 }, 0.77)
     }, heroSectionRef)
@@ -230,7 +232,7 @@ function App() {
   return (
     <main className="bg-maroon text-cream">
       <CustomCursor light={lightTheme} />
-      <Navbar visible={navbarVisible} light={lightTheme} />
+      <Navbar visible={navbarVisible} light={lightTheme} isScrolled={navbarScrolled} />
 
       {/* Secondary Fixed Cream Background - FIXED di viewport z-10 */}
       <div
@@ -270,7 +272,7 @@ function App() {
       </section>
 
       {/* Section lanjutan setelah About (Education, Skills, dst) */}
-      <Education />
+      <Education active={aboutPlay} />
     </main>
   )
 }
