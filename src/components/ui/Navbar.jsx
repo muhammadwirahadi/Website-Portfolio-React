@@ -7,16 +7,16 @@ gsap.registerPlugin(ScrollTrigger)
 const NAV_LINKS = [
   { label: 'About', href: '#about' },
   { label: 'Experiences', href: '#experiences' },
-  { label: 'Project', href: '#projects' },
+  { label: 'Summary', href: '#summary' },
   { label: 'Contact', href: '#contact' },
 ]
 
 function HamburgerIcon({ light = false }) {
   const lineColor = light ? 'bg-maroon' : 'bg-cream'
   return (
-    <div className="flex flex-col gap-[6px] w-6 justify-center items-end group">
-      <span className={`h-[2px] w-6 transition-all duration-300 ${lineColor} group-hover:w-4`} />
-      <span className={`h-[2px] w-4 transition-all duration-300 ${lineColor} group-hover:w-6`} />
+    <div className="flex flex-col gap-1.5 w-6 justify-center items-end group">
+      <span className={`h-0.5 w-6 transition-all duration-300 ${lineColor} group-hover:w-4`} />
+      <span className={`h-0.5 w-4 transition-all duration-300 ${lineColor} group-hover:w-6`} />
     </div>
   )
 }
@@ -138,7 +138,7 @@ function Navbar({ visible = false, light = false, isScrolled = false }) {
           </a>
 
           {/* Wrapper Konten Navigasi Kanan */}
-          <div className="relative flex items-center justify-end min-h-[40px]">
+          <div className="relative flex items-center justify-end min-h-10">
             {/* Inline Links (Desktop - hanya terlihat jika belum di-scroll jauh) */}
             <ul className={`hidden md:flex items-center gap-8 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isScrolled 
@@ -176,7 +176,7 @@ function Navbar({ visible = false, light = false, isScrolled = false }) {
       {/* Drawer Overlay (Backdrop Blur) */}
       <div
         data-drawer-menu
-        className={`fixed inset-0 z-[100] bg-black/45 backdrop-blur-sm transition-opacity duration-500 ${
+        className={`fixed inset-0 z-100 bg-black/45 backdrop-blur-sm transition-opacity duration-500 ${
           isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setIsMenuOpen(false)}
@@ -185,7 +185,7 @@ function Navbar({ visible = false, light = false, isScrolled = false }) {
       {/* Drawer Panel Menu (Morphing rounded-l liquid entry animation) */}
       <div
         data-drawer-menu
-        className={`fixed right-0 top-0 bottom-0 z-[101] h-screen w-full max-w-[380px] bg-maroon text-cream border-l border-gold/20 shadow-2xl p-10 flex flex-col justify-between transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${
+        className={`fixed right-0 top-0 bottom-0 z-101 h-screen w-full max-w-95 bg-maroon text-cream border-l border-gold/20 shadow-2xl p-10 flex flex-col justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform ${
           isMenuOpen 
             ? 'translate-x-0 rounded-l-none' 
             : 'translate-x-full rounded-l-[150px] md:rounded-l-[200px]'

@@ -101,7 +101,7 @@ function Education({ active = false }) {
         {/* Garis Pembatas - Animasi menggambar dari kiri ke kanan */}
         <div
           ref={lineRef}
-          className="mt-4 h-[2px] w-full bg-maroon/25"
+          className="mt-4 h-0.5 w-full bg-maroon/25"
         />
 
         {/* Detail Pendidikan */}
@@ -131,7 +131,7 @@ function Education({ active = false }) {
             
             <p
               ref={detailsRef}
-              className="mt-1 text-sm uppercase tracking-[0.1em] text-maroon/50 font-medium"
+              className="mt-1 text-sm uppercase tracking-widest text-maroon/50 font-medium"
             >
               Jakarta, Indonesia • 2022 - 2026 • IPK 3.96
             </p>

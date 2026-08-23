@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import Lenis from 'lenis'
 import Navbar from './components/ui/Navbar'
 import Constellation from './components/hero/Constellation'
 import Sparkles from './components/hero/Sparkles'
@@ -8,7 +9,11 @@ import ScrollCue from './components/hero/ScrollCue'
 import CustomCursor from './components/ui/CustomCursor'
 import About from './components/about/About'
 import Education from './components/about/Education'
+import Skills from './components/about/Skills'
 import ShootingStars from './components/about/ShootingStars'
+import NextJourney from './components/about/NextJourney'
+import SpaceTransitionScroll from './components/experiences/SpaceTransitionScroll'
+import Experiences from './components/experiences/Experiences'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -38,6 +43,9 @@ function App() {
   // Menyimpan status selesainya animasi masuk About untuk memicu ScrollCue
   const [aboutAnimCompletedState, setAboutAnimCompletedState] = useState(false)
 
+  // Mengontrol keaktifan render bintang jatuh untuk optimasi performa
+  const [showShootingStars, setShowShootingStars] = useState(false)
+
   const heroSectionRef = useRef(null)
   // heroPanRef menggeser seluruh layer visual supaya titik target (bintang
   // 41 Arietis) berakhir tepat di tengah layar. heroVisualsRef melakukan
@@ -52,12 +60,54 @@ function App() {
   const scrollTriggerRef = useRef(null)
   const aboutAnimCompleted = useRef(false)
   const isLockedDown = useRef(false)
+  const lenisRef = useRef(null)
 
   const handleAboutAnimComplete = () => {
     aboutAnimCompleted.current = true
     isLockedDown.current = false
     setAboutAnimCompletedState(true)
   }
+
+  const handleScrollToExperiences = () => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#experiences', { duration: 3.0 })
+    }
+  }
+
+  const handleScrollBackToAbout = () => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#next-journey', { duration: 3.0 })
+    }
+  }
+
+  // Initialize Lenis smooth scroll with heavier/smoother inertial scroll speed
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.6, // Heavier scrolling momentum feel (default 1.0)
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easeOutExpo
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 0.85, // Slower scrolling multiplier for heavier scroll control
+      touchMultiplier: 1.5,
+    })
+
+    lenisRef.current = lenis
+
+    lenis.on('scroll', ScrollTrigger.update)
+
+    const tickerCallback = (time) => {
+      lenis.raf(time * 1000)
+    }
+    gsap.ticker.add(tickerCallback)
+    gsap.ticker.lagSmoothing(0)
+
+    return () => {
+      lenis.destroy()
+      gsap.ticker.remove(tickerCallback)
+      lenisRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     const getLockScroll = () => {
@@ -67,11 +117,16 @@ function App() {
     }
 
     const handleWheel = (e) => {
+      // Lock scroll di halaman About jika animasi belum selesai
       const lockScroll = getLockScroll()
       if (lockScroll && e.deltaY > 0 && !aboutAnimCompleted.current) {
         if (window.scrollY >= lockScroll - 5) {
           e.preventDefault()
-          window.scrollTo(0, lockScroll)
+          if (lenisRef.current) {
+            lenisRef.current.scrollTo(lockScroll, { immediate: true })
+          } else {
+            window.scrollTo(0, lockScroll)
+          }
         }
       }
     }
@@ -85,11 +140,16 @@ function App() {
       if (e.touches.length > 0) {
         const touchEndY = e.touches[0].clientY
         const deltaY = touchStartY - touchEndY
+        
         const lockScroll = getLockScroll()
         if (lockScroll && deltaY > 0 && !aboutAnimCompleted.current) {
           if (window.scrollY >= lockScroll - 5) {
             e.preventDefault()
-            window.scrollTo(0, lockScroll)
+            if (lenisRef.current) {
+              lenisRef.current.scrollTo(lockScroll, { immediate: true })
+            } else {
+              window.scrollTo(0, lockScroll)
+            }
           }
         }
       }
@@ -97,11 +157,16 @@ function App() {
 
     const handleKeyDown = (e) => {
       const scrollDownKeys = [32, 34, 35, 40] // Space, PageDown, End, DownArrow
+
       const lockScroll = getLockScroll()
       if (lockScroll && scrollDownKeys.includes(e.keyCode) && !aboutAnimCompleted.current) {
         if (window.scrollY >= lockScroll - 5) {
           e.preventDefault()
-          window.scrollTo(0, lockScroll)
+          if (lenisRef.current) {
+            lenisRef.current.scrollTo(lockScroll, { immediate: true })
+          } else {
+            window.scrollTo(0, lockScroll)
+          }
         }
       }
     }
@@ -122,13 +187,23 @@ function App() {
   useEffect(() => {
     if (introComplete) {
       setNavbarVisible(true)
-      // Kembalikan overflow body ke normal agar halaman bisa di-scroll kembali
-      document.body.style.overflow = ''
-      document.documentElement.style.overflow = ''
-    } else {
-      // Sembunyikan overflow dan kunci scroll sepenuhnya selama animasi garis rasi menyatu
+    }
+  }, [introComplete])
+
+  // Mengontrol overflow body dan status jalannya Lenis secara terpadu
+  useEffect(() => {
+    const lenis = lenisRef.current
+    
+    const shouldLock = !introComplete
+
+    if (shouldLock) {
       document.body.style.overflow = 'hidden'
       document.documentElement.style.overflow = 'hidden'
+      lenis?.stop()
+    } else {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+      lenis?.start()
     }
 
     return () => {
@@ -143,17 +218,6 @@ function App() {
     if (!introComplete) return
 
     const context = gsap.context(() => {
-      // Ukur posisi ASLI bintang target langsung dari DOM (bukan tebakan
-      // persentase) - ini penting karena SVG constellation di-scale pakai
-      // preserveAspectRatio="slice", jadi posisi visualnya di layar tidak
-      // selalu sama persis dengan hitungan persen dari koordinat viewBox.
-      //
-      // PENTING: ukur dari elemen ikon bintangnya SAJA ([data-star-icon]),
-      // bukan dari seluruh grup bintang ([data-star-id]). Grup itu juga
-      // memuat label nama bintang yang posisinya di ATAS bintang (walau
-      // opacity 0, tetap ikut dihitung sebagai "area"), jadi kalau diukur
-      // dari grupnya, titik tengah yang didapat ketarik ke atas dan bikin
-      // hasil akhirnya kebawahan.
       const starGroupEl = heroVisualsRef.current.querySelector(
         `[data-star-id="${ZOOM_TARGET_STAR_ID}"]`
       )
@@ -177,13 +241,14 @@ function App() {
         scrollTrigger: {
           trigger: heroSectionRef.current,
           start: 'top top',
-          end: '+=250%', // Total scroll ditambah sedikit untuk menciptakan buffer zone di bawah
+          end: '+=250%',
           scrub: 1,
           pin: true,
           pinSpacing: true,
           onUpdate: (self) => {
             setNavbarVisible(self.progress <= 0.001 || self.progress >= 0.80)
             setLightTheme(self.progress >= 0.76)
+            setShowShootingStars(self.progress >= 0.76)
             setAboutPlay(self.progress >= 0.80)
             setNavbarScrolled(self.progress > 0.88)
 
@@ -194,40 +259,50 @@ function App() {
 
                 const lockScroll = Math.round(self.start + (self.end - self.start) * 0.80)
                 if (Math.abs(self.scroll() - lockScroll) > 2) {
-                  self.scroll(lockScroll)
+                  if (lenisRef.current) {
+                    lenisRef.current.scrollTo(lockScroll, { immediate: true })
+                  } else {
+                    self.scroll(lockScroll)
+                  }
                 }
               } else {
-                // Sembunyikan petunjuk scroll jika meluncur ke bawah (progress > 0.82)
-                // Munculkan kembali jika scroll balik ke atas ke halaman About (progress <= 0.82)
                 setAboutAnimCompletedState(self.progress <= 0.82)
               }
             } else if (self.progress < 0.70) {
-              // Reset status animasi jika scroll kembali ke atas (kembali ke rasi bintang)
               aboutAnimCompleted.current = false
               isLockedDown.current = false
               setAboutAnimCompletedState(false)
             }
-          },
+          }
         },
       })
 
       scrollTriggerRef.current = timeline.scrollTrigger
 
       timeline
-        // Zoom rasi bintang Aries
         .to(heroPanRef.current, { x: deltaX, y: deltaY, ease: 'none', duration: 1 }, 0)
         .to(heroVisualsRef.current, { scale: 330, ease: 'none', duration: 1 }, 0)
-        // 1. Latar belakang krem memudar masuk dari 70% ke 76%
         .to(secondaryOverlayRef.current, { opacity: 1, ease: 'none', duration: 0.06 }, 0.70)
-        // 2. Rasi bintang memudar keluar setelah background krem di belakangnya sudah solid (76% ke 77%)
         .to(heroPanRef.current, { opacity: 0, ease: 'none', duration: 0.01 }, 0.76)
         .to(heroPanRef.current, { pointerEvents: 'none', display: 'none', duration: 0.01 }, 0.76)
-        // 3. Konten About memudar masuk setelah rasi bintang hilang (77% ke 79%)
         .to(aboutContentRef.current, { opacity: 1, pointerEvents: 'auto', ease: 'none', duration: 0.02 }, 0.77)
+
+      // Memaksa ScrollTrigger menghitung ulang seluruh posisi pemicu halaman setelah pin spacer ditambahkan
+      ScrollTrigger.refresh()
+      setTimeout(() => {
+        ScrollTrigger.refresh()
+        // Cetak debug pemicu ScrollTrigger untuk memeriksa posisi absolut di DOM
+        console.log('--- ALL SCROLLTRIGGERS ---')
+        ScrollTrigger.getAll().forEach((st, i) => {
+          console.log(`ScrollTrigger #${i}: trigger=${st.trigger?.id || st.trigger?.tagName || 'none'}, start=${st.start}, end=${st.end}, pin=${!!st.pin}`)
+        })
+      }, 300)
     }, heroSectionRef)
 
     return () => context.revert()
   }, [introComplete])
+
+  // (Scroll theme and visibility events are handled dynamically within SpaceTransitionScroll)
 
   return (
     <main className="bg-maroon text-cream">
@@ -239,7 +314,7 @@ function App() {
         ref={secondaryOverlayRef}
         className="pointer-events-none fixed inset-0 z-10 bg-cream opacity-0"
       >
-        <ShootingStars active={lightTheme} />
+        <ShootingStars active={showShootingStars} />
       </div>
 
       {/* Section Hero - Pinned container z-20 (normal pointer events!) */}
@@ -273,6 +348,18 @@ function App() {
 
       {/* Section lanjutan setelah About (Education, Skills, dst) */}
       <Education active={aboutPlay} />
+      <Skills active={aboutPlay} />
+      <NextJourney active={aboutPlay} onNavigate={handleScrollToExperiences} />
+
+      {/* Space Transition & Experiences Section (Scroll Pinned) */}
+      <SpaceTransitionScroll 
+        active={introComplete}
+        onBack={handleScrollBackToAbout} 
+        setNavbarVisible={setNavbarVisible}
+        setLightTheme={setLightTheme}
+        setNavbarScrolled={setNavbarScrolled}
+        setShowShootingStars={setShowShootingStars}
+      />
     </main>
   )
 }

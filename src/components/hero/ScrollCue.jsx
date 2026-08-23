@@ -61,7 +61,7 @@ function ScrollCue({ visible = false, light = false, disableScrollTrigger = fals
     >
       <span className={`text-[10px] uppercase tracking-[0.3em] font-mono ${subColorClass}`}>Scroll</span>
       {/* Bentuk Mouse */}
-      <div className={`relative h-9 w-[22px] rounded-full border ${borderColorClass}`}>
+      <div className={`relative h-9 w-5.5 rounded-full border ${borderColorClass}`}>
         {/* Roda Mouse (Scroll Wheel) yang bergerak turun */}
         <div
           ref={dotRef}

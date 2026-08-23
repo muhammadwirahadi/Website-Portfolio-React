@@ -74,13 +74,18 @@ function About({ play = false, onAnimationComplete }) {
     <div className="relative h-full w-full">
       <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-between gap-6 px-6 text-center md:flex-row md:text-left">
         <div className="max-w-xl">
-          <p ref={eyebrowRef} className="text-sm uppercase tracking-[0.3em] text-maroon/70">
+          <p 
+            ref={eyebrowRef} 
+            className="text-sm uppercase tracking-[0.3em] text-maroon/70"
+            style={{ willChange: 'transform, opacity' }}
+          >
              About Me • Jakarta • Indonesia
           </p>
 
           <h2
             ref={nameRef}
             className="mt-3 font-script text-5xl text-maroon md:text-6xl"
+            style={{ willChange: 'transform, opacity' }}
           >
             <CrystalGlow
               text="Muhammad Wira Hadi"
@@ -93,6 +98,7 @@ function About({ play = false, onAnimationComplete }) {
           <div
             ref={roleRef}
             className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-base uppercase tracking-[0.2em] text-maroon/70 md:justify-start"
+            style={{ willChange: 'transform, opacity' }}
           >I'm a
             <RotatingText
               texts={['Web Developer', 'Full Stack Developer', 'Junior Developer']}
@@ -107,12 +113,20 @@ function About({ play = false, onAnimationComplete }) {
             />
           </div>
 
-          <p ref={bioRef} className="mt-4 text-base text-justify leading-relaxed text-maroon/80">
+          <p 
+            ref={bioRef} 
+            className="mt-4 text-base text-justify leading-relaxed text-maroon/80"
+            style={{ willChange: 'transform, opacity' }}
+          >
             Welcome to my profile. I'm Muhammad Wira Hadi, a Full Stack Developer based in Jakarta, Indonesia, with six months of internship experience in web development. As a fresh graduate, I'm open to job opportunities and collaborations as a Frontend, Backend, or Full Stack Developer.
           </p>
         </div>
 
-        <div ref={imageWrapRef} className="relative shrink-0">
+        <div 
+          ref={imageWrapRef} 
+          className="relative shrink-0"
+          style={{ willChange: 'transform, opacity' }}
+        >
           <div
             ref={glowRef}
             aria-hidden="true"

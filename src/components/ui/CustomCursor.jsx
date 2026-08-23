@@ -11,10 +11,11 @@ function CustomCursor({ light = false }) {
   const ariesRef = useRef(null)
 
   const [isOverDrawer, setIsOverDrawer] = useState(false)
+  const [forceLight, setForceLight] = useState(false)
 
   // Warna aksen kursor dibalik saat berada di atas background terang
-  // (tetapi jika di atas drawer menu, kembalikan ke warna cream/gold agar kontras)
-  const isDarkBg = !light || isOverDrawer
+  // (tetapi jika di atas drawer menu atau elemen bermagnet maroon, kembalikan ke warna cream/gold agar kontras)
+  const isDarkBg = !light || isOverDrawer || forceLight
   const accentColor = isDarkBg ? '#F0E4C8' : '#4A1620'
   const idleTintColor = isDarkBg ? 'rgba(240, 228, 200, 0.1)' : 'rgba(74, 22, 32, 0.08)'
   
@@ -93,6 +94,10 @@ function CustomCursor({ light = false }) {
       // Cek apakah kursor berada di atas menu drawer
       const isDrawer = target.closest('[data-drawer-menu]')
       setIsOverDrawer(!!isDrawer)
+
+      // Cek apakah kursor berada di atas elemen yang mengharuskan pointer cream/terang (misal tombol maroon)
+      const isLightPointer = target.closest('[data-cursor-light]')
+      setForceLight(!!isLightPointer)
     }
 
     window.addEventListener('mouseover', handleMouseOver)

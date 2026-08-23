@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 
-// Berapa banyak "bintang jatuh" yang jalan bersamaan (dikurangi untuk optimasi performa).
-const STAR_COUNT = 12
+// Berapa banyak "bintang jatuh" yang jalan bersamaan (dikurangi untuk optimasi performa). (12)
+const STAR_COUNT = 8
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min)
