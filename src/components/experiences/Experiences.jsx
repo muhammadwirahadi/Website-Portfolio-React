@@ -1,99 +1,435 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import KineticTextGrid from './KineticTextGrid'
+import HoverImageReveal from './HoverImageReveal'
+import SkewInText from './SkewInText'
+import MagneticCarousel from './MagneticCarousel'
+import lsfGrid from '../../assets/lsf-grid.png'
+import badilagGrid from '../../assets/badilag-grid.png'
+
+// Import asset screens LSF
+import lsfLogin from '../../assets/lsf/login-lsf.png'
+import lsfMahasiswa from '../../assets/lsf/mahasiswa-lsf.png'
+import lsfPembimbing from '../../assets/lsf/pembimbing-lsf.png'
+import lsfSuperadmin from '../../assets/lsf/superadmin-admin-lsf.png'
+import lsfWelcome from '../../assets/lsf/welcome-lsf.png'
+
+// Import asset screens Badilag
+import badilagKegiatan from '../../assets/badilag/kegiatan-badilag.png'
+import badilagLogin from '../../assets/badilag/login-badilag.png'
+import badilagLowongan from '../../assets/badilag/lowongan-badilag.png'
+import badilagPendaftaran from '../../assets/badilag/pendaftaran-badilag.png'
+import badilagWelcome from '../../assets/badilag/welcome-badilag.png'
 
 gsap.registerPlugin(ScrollTrigger)
 
-function Experiences({ onBack }) {
+const EXPERIENCES_DATA = [
+  {
+    company: "Lembaga Sensor Film RI",
+    period: "Jan 2026 - Mar 2026",
+    role: "Fullstack Developer",
+    image: { src: lsfGrid }
+  },
+  {
+    company: "Ditjen Badan Peradilan Agama",
+    period: "Oct 2025 - Dec 2025",
+    role: "Backend Developer",
+    image: { src: badilagGrid }
+  },
+]
+
+const PROJECTS_DATA = [
+  {
+    company: "Lembaga Sensor Film RI",
+    period: "Contract",
+    role: "Fullstack Developer",
+    image: { src: lsfGrid },
+    details: {
+      title: "Lembaga Sensor Film RI",
+      role: "Fullstack Developer (Internship)",
+      description: "Saya membangun website SI-LSF (Sistem Informasi Lembaga Sensor Film) untuk memudahkan mahasiswa melakukan pendaftaran magang secara online dan mencatat logbook harian magang secara terintegrasi setelah diterima. Sistem ini merapikan administrasi data magang secara terpusat bagi pembimbing lapangan dan staf administrasi LSF agar data magang terkelola dengan baik dan tidak terpencar-pencar.",
+      tech: ["PHP", "Laravel 10", "Vue.js", "Tailwind", "Inertia.js", "MySQL", "GitHub"],
+      carouselImages: [
+        { 
+          isInfo: true, 
+          title: "LSF - Lembaga Sensor Film", 
+          role: "Fullstack Developer", 
+          description: "Sistem Informasi Kerja Praktik & Magang SI-LSF. Mempermudah pendaftaran mahasiswa secara online, pencatatan logbook harian magang, serta memusatkan administrasi data magang bagi pembimbing lapangan dan staf LSF agar terorganisir.", 
+          tech: ["PHP", "Laravel 10", "Vue.js", "Tailwind", "Inertia.js", "MySQL", "GitHub"] 
+        },
+        { src: lsfWelcome },
+        { src: lsfLogin },
+        { src: lsfMahasiswa, bgPos: "left center" },
+        { src: lsfPembimbing, bgPos: "left center" },
+        { src: lsfSuperadmin, bgPos: "left center" }
+      ]
+    }
+  },
+  {
+    company: "Ditjen Badan Peradilan Agama",
+    period: "Contract",
+    role: "Backend Developer",
+    image: { src: badilagGrid },
+    details: {
+      title: "Ditjen Badan Peradilan Agama",
+      role: "Backend Developer (Internship)",
+      description: "Pengembangan website portal pendaftaran magang untuk Ditjen Badilag Mahkamah Agung RI dengan fokus utama pada sisi Backend. Bertanggung jawab atas perancangan Entity Relationship Diagram (ERD) database, arsitektur role-based access control, Validasi Data, Autentikasi saat login, pembuatan fitur fungsional untuk masing-masing user role, serta kontribusi minor pada pengerjaan visual antarmuka.",
+      tech: ["PHP", "Laravel 10", "Vue.js", "Inertia.js", "Tailwind", "MySQL", "GitHub"],
+      carouselImages: [
+        { 
+          isInfo: true, 
+          title: "Badilag MA RI", 
+          role: "Backend Developer", 
+          description: "Portal pendaftaran magang Ditjen Badilag MA RI. Berfokus pada pengembangan backend, arsitektur role-based, perancangan Entity Relationship Diagram (ERD), Validasi Data, Autentikasi saat login, dan fungsionalitas fitur pengguna.", 
+          tech: ["PHP", "Laravel 10", "Vue.js", "Inertia.js", "Tailwind", "MySQL", "GitHub"] 
+        },
+        { src: badilagWelcome },
+        { src: badilagLogin },
+        { src: badilagPendaftaran },
+        { src: badilagKegiatan },
+        { src: badilagLowongan }
+      ]
+    }
+  },
+]
+
+function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) {
   const containerRef = useRef(null)
+  
+  // Refs untuk seksi Experiences (Page 1)
   const titleRef = useRef(null)
-  const timelineRef = useRef(null)
+  const lineRef = useRef(null)
+  const listRef = useRef(null)
+  
+  // Refs untuk seksi Projects (Page 2)
+  const projectsSectionRef = useRef(null)
+  const projectsLineRef = useRef(null)
+  const projectsListRef = useRef(null)
+  
+  const [kineticComplete, setKineticComplete] = useState(false)
+  const [startProjectsAnim, setStartProjectsAnim] = useState(false)
+  const [finalLeft, setFinalLeft] = useState(24)
+
+  // State untuk mengontrol project detail modal
+  const [selectedProject, setSelectedProject] = useState(null)
 
   useEffect(() => {
-    const context = gsap.context(() => {
-      gsap.set([titleRef.current, '.timeline-item'], { opacity: 0, y: 30 })
+    const handleResize = () => {
+      const W = window.innerWidth
+      if (W >= 1152) {
+        setFinalLeft((W - 1152) / 2 + 24)
+      } else {
+        setFinalLeft(24)
+      }
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: 'top 65%',
-          toggleActions: 'play none none reverse',
+  useEffect(() => {
+    if (!active) {
+      setKineticComplete(false)
+      setStartProjectsAnim(false)
+      setSelectedProject(null)
+      if (titleRef.current) {
+        gsap.set(titleRef.current, {
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          y: 0,
+          scale: window.innerWidth < 768 ? 1.33 : 3.33,
+          fontSize: window.innerWidth < 768 ? '24px' : '24px',
+          fontWeight: 700,
+          letterSpacing: '0.35em',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          opacity: 0,
+          color: '#4A1620',
+          fontFamily: 'var(--font-display), "Archivo", sans-serif',
+        })
+      }
+      if (lineRef.current) {
+        gsap.set(lineRef.current, { scaleX: 0 })
+      }
+      if (listRef.current) {
+        gsap.set(listRef.current, { opacity: 0, y: 30 })
+      }
+      if (projectsSectionRef.current) {
+        gsap.set(projectsSectionRef.current, { opacity: 0, y: 0 })
+      }
+      if (projectsLineRef.current) {
+        gsap.set(projectsLineRef.current, { scaleX: 0 })
+      }
+      if (projectsListRef.current) {
+        gsap.set(projectsListRef.current, { opacity: 0, y: 30 })
+      }
+      return
+    }
+
+    // Set posisi awal Experiences di tengah layar saat aktif
+    gsap.set(titleRef.current, {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      xPercent: -50,
+      yPercent: -50,
+      x: 0,
+      y: 0,
+      scale: window.innerWidth < 768 ? 1.33 : 3.33,
+      fontSize: window.innerWidth < 768 ? '24px' : '24px',
+      fontWeight: 700,
+      letterSpacing: '0.35em',
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      opacity: 0,
+      color: '#4A1620',
+      fontFamily: 'var(--font-display), "Archivo", sans-serif',
+    })
+    if (lineRef.current) {
+      gsap.set(lineRef.current, { scaleX: 0 })
+    }
+    if (listRef.current) {
+      gsap.set(listRef.current, { opacity: 0, y: 30 })
+    }
+    if (projectsSectionRef.current) {
+      gsap.set(projectsSectionRef.current, { opacity: 0, y: 0 })
+    }
+    if (projectsLineRef.current) {
+      gsap.set(projectsLineRef.current, { scaleX: 0 })
+    }
+    if (projectsListRef.current) {
+      gsap.set(projectsListRef.current, { opacity: 0, y: 30 })
+    }
+  }, [active])
+
+  // ScrollTrigger untuk memicu munculnya seksi Projects (Page 2)
+  // setelah Experiences (Page 1) mulai bergeser ke atas
+  useEffect(() => {
+    if (!active || !scrollerRef?.current) return
+
+    const context = gsap.context(() => {
+      gsap.fromTo(projectsSectionRef.current,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.8,
+          scrollTrigger: {
+            trigger: projectsSectionRef.current,
+            scroller: scrollerRef.current,
+            start: 'top 75%',
+            toggleActions: 'play none none none',
+            onEnter: () => {
+              setStartProjectsAnim(true)
+            }
+          }
         }
-      })
-      tl.to(titleRef.current, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
-        .to('.timeline-item', { opacity: 1, y: 0, duration: 0.6, stagger: 0.2, ease: 'power3.out' }, '-=0.4')
+      )
     }, containerRef)
 
     return () => context.revert()
-  }, [])
+  }, [active, scrollerRef])
+
+  const handleKineticComplete = () => {
+    setKineticComplete(true)
+
+    const context = gsap.context(() => {
+      gsap.set(titleRef.current, { opacity: 1 })
+
+      const tl = gsap.timeline()
+      
+      tl.to(titleRef.current, {
+        left: finalLeft,
+        top: '22vh',
+        xPercent: 0,
+        yPercent: 0,
+        scale: 1,
+        fontSize: window.innerWidth < 768 ? '16px' : '24px',
+        duration: 1.0,
+        ease: 'power3.inOut',
+      })
+      .to(lineRef.current, {
+        scaleX: 1,
+        duration: 0.6,
+        ease: 'power2.inOut',
+      }, '-=0.4')
+      .to(listRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+      }, '-=0.3')
+      
+      setNavbarVisible?.(true)
+    }, containerRef)
+  }
+
+  // Callback dipicu saat huruf-huruf Projects selesai skew-in
+  const handleProjectsTitleComplete = () => {
+    const context = gsap.context(() => {
+      const tl = gsap.timeline()
+      
+      tl.to(projectsLineRef.current, {
+        scaleX: 1,
+        duration: 0.6,
+        ease: 'power2.inOut',
+      })
+      .to(projectsListRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+      }, '-=0.3')
+    }, containerRef)
+  }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-cream text-maroon py-24 px-6 relative">
-      <div className="max-w-4xl mx-auto mt-12">
-        {/* Judul Halaman */}
-        <div ref={titleRef} className="text-center mb-20">
-          <p className="text-sm uppercase tracking-[0.35em] text-maroon/60">Journal</p>
-          <h2 className="mt-3 font-script text-5xl md:text-6xl text-maroon">Experiences</h2>
-          <div className="mx-auto mt-6 h-0.5 w-24 bg-maroon/20" />
-        </div>
+    <div ref={containerRef} className="w-full bg-cream text-[#4A1620] relative overflow-x-hidden">
+      
+      {/* Halaman 1: Experiences (Mengisi 1 layar penuh min-h-screen) */}
+      <div className="min-h-screen relative w-full pt-[28vh] pb-24">
+        {/* Teks Judul Experiences */}
+        <p
+          ref={titleRef}
+          style={{
+            margin: 0,
+            padding: 0,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 40,
+          }}
+        >
+          EXPERIENCES
+        </p>
 
-        {/* Timeline Riwayat Kerja */}
-        <div ref={timelineRef} className="space-y-16 relative before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-maroon/10 md:before:left-1/2 md:before:-translate-x-1/2">
-          
-          {/* Magang 1: Badilag */}
-          <div className="timeline-item relative flex flex-col md:flex-row md:justify-between md:items-start group">
-            {/* Bullet Node */}
-            <div className="absolute left-[10px] top-6 h-3.5 w-3.5 rounded-full bg-gold border-2 border-cream z-10 md:left-1/2 md:-translate-x-1/2" />
-            
-            {/* Desktop Left (Date) */}
-            <div className="hidden md:block w-[45%] text-right pr-8 pt-4">
-              <span className="font-bold text-lg text-maroon/50 font-display">Mar 2024 - Sep 2024</span>
-            </div>
-            
-            {/* Right Card */}
-            <div className="w-full pl-12 md:w-[45%] md:pl-0">
-              <div className="bg-[#FAF6EE] border border-maroon/10 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <span className="md:hidden block text-sm font-bold text-maroon/50 mb-2">Mar 2024 - Sep 2024</span>
-                <h3 className="text-xl font-bold text-maroon">Backend Developer Intern</h3>
-                <p className="text-gold font-semibold uppercase tracking-widest text-xs mt-1">Badilag</p>
-                <p className="text-xs text-maroon/40 mt-0.5 uppercase tracking-wider font-semibold">Direktorat Jenderal Badan Peradilan Agama</p>
-                <ul className="mt-4 space-y-2.5 text-sm text-maroon/80 list-disc list-inside">
-                  <li>Developed clean and scalable RESTful APIs for the internship registration system.</li>
-                  <li>Managed database schema designs for secure document submissions and storage.</li>
-                  <li>Created admin panels to optimize processing and student review workflows.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+        {/* Garis Pembatas Experiences */}
+        <div
+          ref={lineRef}
+          className="absolute h-0.5 bg-[#4A1620]/25 z-20"
+          style={{
+            left: finalLeft,
+            width: window.innerWidth - 2 * finalLeft,
+            top: 'calc(22vh + 40px)',
+            transformOrigin: 'left center',
+          }}
+        />
 
-          {/* Magang 2: LSF */}
-          <div className="timeline-item relative flex flex-col md:flex-row md:justify-between md:items-start md:flex-row-reverse group">
-            {/* Bullet Node */}
-            <div className="absolute left-[10px] top-6 h-3.5 w-3.5 rounded-full bg-gold border-2 border-cream z-10 md:left-1/2 md:-translate-x-1/2" />
-            
-            {/* Desktop Right (Date) */}
-            <div className="hidden md:block w-[45%] text-left pl-8 pt-4">
-              <span className="font-bold text-lg text-maroon/50 font-display">Sep 2024 - Mar 2025</span>
-            </div>
-            
-            {/* Left Card */}
-            <div className="w-full pl-12 md:w-[45%] md:pl-0">
-              <div className="bg-[#FAF6EE] border border-maroon/10 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <span className="md:hidden block text-sm font-bold text-maroon/50 mb-2">Sep 2024 - Mar 2025</span>
-                <h3 className="text-xl font-bold text-maroon">Full Stack Developer Intern</h3>
-                <p className="text-gold font-semibold uppercase tracking-widest text-xs mt-1">Lembaga Sensor Film</p>
-                <p className="text-xs text-maroon/40 mt-0.5 uppercase tracking-wider font-semibold">LSF Republik Indonesia</p>
-                <ul className="mt-4 space-y-2.5 text-sm text-maroon/80 list-disc list-inside">
-                  <li>Designed and developed the entire interactive student internship portal.</li>
-                  <li>Integrated front-end forms with back-end application screening workflows.</li>
-                  <li>Built responsive administrative dashboards for processing candidates in real-time.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
+        {/* List Pengalaman */}
+        <div ref={listRef} className="max-w-6xl w-full mx-auto px-6 opacity-0 relative z-10">
+          <HoverImageReveal items={EXPERIENCES_DATA} textColor="#4A1620" dimColor="rgba(74, 22, 32, 0.35)" />
         </div>
       </div>
+
+      {/* Halaman 2: Projects (Mengisi 1 layar penuh berikutnya min-h-screen) */}
+      <div 
+        ref={projectsSectionRef} 
+        className="min-h-screen flex flex-col justify-center relative w-full py-24 opacity-0"
+      >
+        <div className="max-w-6xl w-full mx-auto px-6">
+          
+          {/* Projects Title (menggunakan SkewInText) */}
+          <div className="flex items-center">
+            <SkewInText 
+              text="Projects"
+              appearTrigger={startProjectsAnim ? "default" : "manual"}
+              onLetterAnimationComplete={handleProjectsTitleComplete}
+              font={{
+                fontFamily: "var(--font-display), 'Archivo', sans-serif",
+                fontWeight: 700,
+                fontSize: window.innerWidth < 768 ? '16px' : '24px',
+                lineHeight: "1.2em",
+                letterSpacing: "0.35em",
+                textTransform: "uppercase",
+                textAlign: "left",
+              }}
+              color="#4A1620"
+              width="auto"
+              height="auto"
+              startSkewX={-70}
+              startX={300}
+            />
+          </div>
+
+          {/* Garis Pembatas Projects */}
+          <div
+            ref={projectsLineRef}
+            className="mt-4 h-0.5 w-full bg-[#4A1620]/25 origin-left"
+            style={{
+              transform: 'scaleX(0)',
+            }}
+          />
+
+          {/* List Projects dengan Hover Image Reveal (period diganti "Contract" & cursorText "View") */}
+          <div ref={projectsListRef} className="opacity-0 translate-y-10">
+            <HoverImageReveal 
+              items={PROJECTS_DATA} 
+              textColor="#4A1620" 
+              dimColor="rgba(74, 22, 32, 0.35)"
+              cursorText="View"
+              onItemClick={(item) => setSelectedProject(item.details)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Animasi Kinetic Text Grid (Appear Text) */}
+      {active && !kineticComplete && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <KineticTextGrid onComplete={handleKineticComplete} />
+        </div>
+      )}
+
+      {/* MODAL DETAIL PROJECT (Magnetic Carousel) */}
+      {selectedProject && (
+        <div 
+          className="fixed inset-0 bg-[#F8F1DC]/97 z-[999] backdrop-blur-md flex flex-col items-center justify-center p-6"
+          onClick={() => setSelectedProject(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          {/* Container Magnetic Carousel */}
+          <div 
+            className="w-full max-w-6xl h-[500px] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MagneticCarousel images={selectedProject.carouselImages} openSizeWidth={750} openSizeHeight={420} />
+          </div>
+
+          {/* Instruksi Pengguna */}
+          <p className="mt-8 text-xs font-mono uppercase tracking-[0.2em] text-[#4A1620]/60 select-none animate-pulse">
+            Click cards to expand/collapse • Click outside or button to close
+          </p>
+
+          {/* Tombol Tutup Silang di Kanan Atas (Dibuat sejajar dengan batas konten/hamburger menu) */}
+          <div className="absolute top-28 left-0 right-0 max-w-6xl w-full mx-auto px-6 pointer-events-none z-50">
+            <motion.div 
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedProject(null)
+              }}
+              role="button"
+              className="absolute right-6 top-0 text-[#4A1620] cursor-pointer font-bold text-2xl flex items-center justify-center h-12 w-12 border border-[#4A1620]/25 rounded-full select-none pointer-events-auto"
+              style={{ zIndex: 10000, cursor: "none" }}
+              whileHover={{ 
+                scale: 1.1, 
+                rotate: 90, 
+                backgroundColor: "#4A1620", 
+                borderColor: "#4A1620",
+                color: "#F8F1DC" 
+              }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              &times;
+            </motion.div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

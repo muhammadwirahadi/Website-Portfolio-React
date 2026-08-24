@@ -36,6 +36,10 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
   // State untuk mengontrol kemunculan ScrollCue petunjuk scroll
   const [showScrollCue, setShowScrollCue] = useState(false)
 
+  // State untuk melacak kapan halaman Experiences benar-benar aktif/selesai zoom-in
+  const [isExperiencesActive, setIsExperiencesActive] = useState(false)
+  const scrollTriggerRef = useRef(null)
+
   useEffect(() => {
     if (!active) return
 
@@ -116,9 +120,18 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
             pin: true,
             pinSpacing: true,
             onUpdate: (self) => {
-              // Sembunyikan navbar selama transisi, tampilkan di awal (About) dan akhir (Experiences)
-              if (self.progress <= 0.05 || self.progress >= 0.90) {
+              // Simpan referensi scrollTrigger untuk membatasi scroll sebelum selesai zoom
+              scrollTriggerRef.current = self
+
+              // Aktifkan konten halaman Experiences ketika transisi zoom-in selesai (progress >= 0.90)
+              setIsExperiencesActive(self.progress >= 0.90)
+
+              // Sembunyikan navbar selama transisi. Tampilkan di awal (About).
+              // Di akhir (Experiences), navbar akan ditampilkan secara sinkron oleh Experiences.jsx setelah animasi teks kinetik selesai.
+              if (self.progress <= 0.05) {
                 setNavbarVisible?.(true)
+              } else if (self.progress >= 0.90) {
+                // Biarkan Experiences.jsx yang memicu setNavbarVisible(true) setelah animasi selesai
               } else {
                 setNavbarVisible?.(false)
               }
@@ -156,6 +169,7 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
             },
             onLeaveBack: () => {
               // Proteksi saat user scroll balik ke atas melewati batas awal transisi
+              setIsExperiencesActive(false)
               setNavbarVisible?.(true)
               setLightTheme?.(true)
               setShowShootingStars?.(true)
@@ -231,6 +245,80 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
       if (context) context.revert()
     }
   }, [active])
+
+  // Handle event propagation for wheel/touch events inside Experiences container
+  // to bypass Lenis' global scroll hijacking when scrolling inside the timeline
+  useEffect(() => {
+    const el = experiencesRef.current
+    if (!el) return
+
+    const handleWheel = (e) => {
+      // Hanya izinkan nested scroll jika progress transisi zoom-in Hamal sudah selesai (progress >= 0.95)
+      const st = scrollTriggerRef.current
+      const progress = st ? st.progress : 0
+      if (progress < 0.95) return
+
+      const { scrollTop, scrollHeight, clientHeight } = el
+      const maxScroll = scrollHeight - clientHeight
+
+      if (e.deltaY > 0) {
+        // Scrolling down
+        if (scrollTop < maxScroll - 1) {
+          // If we haven't reached the bottom, let it scroll natively (stop propagation to Lenis)
+          e.stopPropagation()
+        }
+      } else if (e.deltaY < 0) {
+        // Scrolling up
+        if (scrollTop > 1) {
+          // If we are not at the very top, let it scroll natively (stop propagation to Lenis)
+          e.stopPropagation()
+        }
+      }
+    }
+
+    let touchStartY = 0
+    const handleTouchStart = (e) => {
+      if (e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY
+      }
+    }
+
+    const handleTouchMove = (e) => {
+      // Hanya izinkan nested scroll jika progress transisi zoom-in Hamal sudah selesai (progress >= 0.95)
+      const st = scrollTriggerRef.current
+      const progress = st ? st.progress : 0
+      if (progress < 0.95) return
+
+      if (e.touches.length > 0) {
+        const touchEndY = e.touches[0].clientY
+        const deltaY = touchStartY - touchEndY
+        const { scrollTop, scrollHeight, clientHeight } = el
+        const maxScroll = scrollHeight - clientHeight
+
+        if (deltaY > 0) {
+          // Swiping up (scrolling down)
+          if (scrollTop < maxScroll - 1) {
+            e.stopPropagation()
+          }
+        } else if (deltaY < 0) {
+          // Swiping down (scrolling up)
+          if (scrollTop > 1) {
+            e.stopPropagation()
+          }
+        }
+      }
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    el.addEventListener('touchstart', handleTouchStart, { passive: true })
+    el.addEventListener('touchmove', handleTouchMove, { passive: false })
+
+    return () => {
+      el.removeEventListener('wheel', handleWheel)
+      el.removeEventListener('touchstart', handleTouchStart)
+      el.removeEventListener('touchmove', handleTouchMove)
+    }
+  }, [])
 
   const handleExperiencesScroll = (e) => {
     const scrollTop = e.currentTarget.scrollTop
@@ -365,7 +453,7 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
         onScroll={handleExperiencesScroll}
         className="pointer-events-none absolute inset-0 z-30 opacity-0 overflow-y-auto"
       >
-        <Experiences onBack={onBack} />
+        <Experiences active={isExperiencesActive} onBack={onBack} setNavbarVisible={setNavbarVisible} scrollerRef={experiencesRef} />
         
         {/* Scroll Cue (petunjuk scroll ke bawah, hilang saat mulai discroll) */}
         <ScrollCue visible={showScrollCue} light={true} disableScrollTrigger={true} />

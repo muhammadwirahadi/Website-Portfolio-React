@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Text3DFlip from '../ui/Text3DFlip'
+import ScrollCue from '../hero/ScrollCue'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -10,6 +11,7 @@ function NextJourney({ active = false, onNavigate }) {
   const titleRef = useRef(null)
   const buttonTriggerRef = useRef(null)
   const buttonInnerRef = useRef(null)
+  const scrollCueRef = useRef(null)
   const [isHovered, setIsHovered] = useState(false)
 
   // 1. ScrollTrigger Entrance Animation
@@ -20,6 +22,7 @@ function NextJourney({ active = false, onNavigate }) {
       // Inisialisasi awal
       gsap.set(titleRef.current, { opacity: 0, y: 50 })
       gsap.set(buttonTriggerRef.current, { opacity: 0, scale: 0.7 })
+      gsap.set(scrollCueRef.current, { opacity: 0 })
  
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -41,6 +44,22 @@ function NextJourney({ active = false, onNavigate }) {
         duration: 0.8,
         ease: 'back.out(1.5)',
       }, '-=0.5')
+      .to(scrollCueRef.current, {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
+      }, '-=0.4')
+
+      // Animasi fade out petunjuk scroll saat mendekati transisi keluar/zoom out
+      gsap.to(scrollCueRef.current, {
+        opacity: 0,
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'bottom 98%',
+          end: 'bottom 88%',
+          scrub: true,
+        }
+      })
 
     }, sectionRef)
 
@@ -164,6 +183,11 @@ function NextJourney({ active = false, onNavigate }) {
             </div>
           </button>
         </div>
+      </div>
+
+      {/* Petunjuk scroll untuk user ke transisi luar angkasa */}
+      <div ref={scrollCueRef} className="pointer-events-none">
+        <ScrollCue visible={active} light={true} disableScrollTrigger={true} />
       </div>
     </section>
   )

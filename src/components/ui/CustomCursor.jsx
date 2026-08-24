@@ -22,6 +22,7 @@ function CustomCursor({ light = false }) {
   const [isHovered, setIsHovered] = useState(false)
   const [isAriesHovered, setIsAriesHovered] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [cursorText, setCursorText] = useState('')
   const [isVisible, setIsVisible] = useState(false)
   const isVisibleRef = useRef(false)
 
@@ -98,6 +99,10 @@ function CustomCursor({ light = false }) {
       // Cek apakah kursor berada di atas elemen yang mengharuskan pointer cream/terang (misal tombol maroon)
       const isLightPointer = target.closest('[data-cursor-light]')
       setForceLight(!!isLightPointer)
+
+      // Cek apakah kursor berada di atas elemen yang memiliki teks instruksi kustom
+      const cursorTextEl = target.closest('[data-cursor-text]')
+      setCursorText(cursorTextEl ? cursorTextEl.getAttribute('data-cursor-text') : '')
     }
 
     window.addEventListener('mouseover', handleMouseOver)
@@ -152,7 +157,7 @@ function CustomCursor({ light = false }) {
       if (isHovered) {
         // Saat hover: kursor membesar menjadi lingkaran target/hollow ring
         gsap.to(dot, {
-          scale: 5,
+          scale: cursorText ? 8 : 5,
           opacity: 1,
           backgroundColor: idleTintColor,
           borderColor: accentColor,
@@ -189,7 +194,7 @@ function CustomCursor({ light = false }) {
         })
       }
     }
-  }, [isHovered, isAriesHovered, isScrolled, light])
+  }, [isHovered, isAriesHovered, isScrolled, cursorText, light])
 
   return (
     <div
@@ -226,6 +231,16 @@ function CustomCursor({ light = false }) {
         ref={dotRef}
         className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent"
       />
+
+      {/* Teks Kursor Kustom (misalnya "View") */}
+      {cursorText && (
+        <span 
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] font-sans font-extrabold uppercase tracking-[0.15em] pointer-events-none select-none z-10"
+          style={{ color: accentColor }}
+        >
+          {cursorText}
+        </span>
+      )}
 
       {/* Aries Custom Icon */}
       <svg
