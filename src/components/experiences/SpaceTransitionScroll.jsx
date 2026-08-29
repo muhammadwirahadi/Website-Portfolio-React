@@ -258,6 +258,12 @@ function SpaceTransitionScroll({ active = false, onBack, setNavbarVisible, setLi
         id="experiences"
         className="relative z-30 h-screen w-screen overflow-hidden bg-maroon"
       >
+        <style>{`
+          #experiences {
+            top: -2px !important;
+            height: calc(100vh + 4px) !important;
+          }
+        `}</style>
         <Sparkles className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-60" active={sparklesActive} />
 
         <div ref={heroPanRef} className="absolute inset-0 h-full w-full pointer-events-none z-10">

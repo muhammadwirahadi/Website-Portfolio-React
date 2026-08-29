@@ -249,15 +249,16 @@ function Experiences({ active = false, onBack, setNavbarVisible, onNextJourney, 
   const handleKineticComplete = () => {
     setKineticComplete(true)
 
-    // Animasi Kinetic Text Grid udah selesai - baru di titik ini scroll
-    // dibuka lagi, biar posisi user tetap presis di atas section Experiences
-    // selama proses reveal (title settle, garis, list fade-in) berlangsung.
-    window.globalLenis?.start()
-
     const context = gsap.context(() => {
       gsap.set(titleRef.current, { opacity: 1 })
 
-      const tl = gsap.timeline()
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Animasi Kinetic Text Grid DAN seluruh isi halaman Experiences selesai
+          // Baru di titik ini scroll dibuka lagi!
+          window.globalLenis?.start()
+        }
+      })
       
       tl.to(titleRef.current, {
         left: finalLeft,

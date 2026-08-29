@@ -15,6 +15,7 @@ import NextJourney from './components/about/NextJourney'
 import SpaceTransitionScroll from './components/experiences/SpaceTransitionScroll'
 import Experiences from './components/experiences/Experiences'
 import SummarySpaceTransition from './components/summary/SummarySpaceTransition'
+import ContactSpaceTransition from './components/contact/ContactSpaceTransition'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -46,6 +47,7 @@ function App() {
 
   // Mengontrol keaktifan render bintang jatuh untuk optimasi performa
   const [showShootingStars, setShowShootingStars] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
   const heroSectionRef = useRef(null)
   // heroPanRef menggeser seluruh layer visual supaya titik target (bintang
@@ -94,8 +96,36 @@ function App() {
   }
 
   const handleScrollToContact = () => {
-    console.log("Navigating to Contact star (Mesarthim)...")
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#contact', { duration: 3.0 })
+    }
   }
+
+  const handleScrollBackToSummary = () => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#next-journey-summary', { duration: 3.0 })
+    }
+  }
+
+  const handleResetToAbout = () => {
+    setIsResetting(true)
+    setTimeout(() => {
+      // Teleport ke posisi 0 → Hero ScrollTrigger progress=0 → konstellasi Aries full terlihat
+      window.scrollTo(0, 0)
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(0, { immediate: true })
+      }
+
+      // Paksa GSAP memperbarui semua inline style agar sync dengan posisi scroll baru
+      ScrollTrigger.update()
+
+      setTimeout(() => {
+        setIsResetting(false)
+      }, 300)
+    }, 700)
+  }
+
+
 
   // Initialize Lenis smooth scroll with heavier/smoother inertial scroll speed
   useEffect(() => {
@@ -392,6 +422,26 @@ function App() {
           onNextJourney={handleScrollToContact}
         />
       </div>
+
+      {/* Space Transition & Contact Section (Scroll Pinned) */}
+      <div className="-mt-1 bg-maroon">
+        <ContactSpaceTransition 
+          active={introComplete}
+          onBack={handleScrollBackToSummary}
+          setNavbarVisible={setNavbarVisible}
+          setLightTheme={setLightTheme}
+          setNavbarScrolled={setNavbarScrolled}
+          setShowShootingStars={setShowShootingStars}
+          onResetApp={handleResetToAbout}
+        />
+      </div>
+
+      {/* Full Screen Reset Transition Overlay */}
+      <div 
+        className={`fixed inset-0 z-[9999] bg-cream pointer-events-none transition-opacity duration-700 ${
+          isResetting ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
     </main>
   )
 }
