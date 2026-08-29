@@ -6,6 +6,7 @@ import KineticTextGrid from './KineticTextGrid'
 import HoverImageReveal from './HoverImageReveal'
 import SkewInText from './SkewInText'
 import MagneticCarousel from './MagneticCarousel'
+import NextJourneyExperiences from './NextJourneyExperiences'
 import lsfGrid from '../../assets/lsf-grid.png'
 import badilagGrid from '../../assets/badilag-grid.png'
 
@@ -95,7 +96,7 @@ const PROJECTS_DATA = [
   },
 ]
 
-function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) {
+function Experiences({ active = false, onBack, setNavbarVisible, onNextJourney, showNextJourneyCue = true }) {
   const containerRef = useRef(null)
   
   // Refs untuk seksi Experiences (Page 1)
@@ -131,6 +132,7 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
 
   useEffect(() => {
     if (!active) {
+      window.globalLenis?.start()
       setKineticComplete(false)
       setStartProjectsAnim(false)
       setSelectedProject(null)
@@ -172,6 +174,14 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
       return
     }
 
+    // Kinetic Text Grid baru mulai main (active baru jadi true) - kunci
+    // scroll sementara di sini. Tanpa ini, momentum/inersia dari Lenis
+    // (smooth scroll) masih "meluncur" dikit selagi animasi Kinetic Text
+    // main beberapa detik, jadi begitu animasinya selesai, posisi user udah
+    // "kelewat" dari titik paling atas section Experiences - makanya harus
+    // scroll manual lagi buat balik ke atas.
+    window.globalLenis?.stop()
+
     // Set posisi awal Experiences di tengah layar saat aktif
     gsap.set(titleRef.current, {
       position: 'absolute',
@@ -209,9 +219,11 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
   }, [active])
 
   // ScrollTrigger untuk memicu munculnya seksi Projects (Page 2)
-  // setelah Experiences (Page 1) mulai bergeser ke atas
+  // setelah Experiences (Page 1) mulai bergeser ke atas. Pakai scroller
+  // default (window) sekarang - dulu di-arahkan ke container scroll
+  // bersarang, tapi itu sudah dihapus (lihat SpaceTransitionScroll.jsx).
   useEffect(() => {
-    if (!active || !scrollerRef?.current) return
+    if (!active) return
 
     const context = gsap.context(() => {
       gsap.fromTo(projectsSectionRef.current,
@@ -221,8 +233,7 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
           duration: 0.8,
           scrollTrigger: {
             trigger: projectsSectionRef.current,
-            scroller: scrollerRef.current,
-            start: 'top 75%',
+            start: 'top 45%',
             toggleActions: 'play none none none',
             onEnter: () => {
               setStartProjectsAnim(true)
@@ -233,10 +244,15 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
     }, containerRef)
 
     return () => context.revert()
-  }, [active, scrollerRef])
+  }, [active])
 
   const handleKineticComplete = () => {
     setKineticComplete(true)
+
+    // Animasi Kinetic Text Grid udah selesai - baru di titik ini scroll
+    // dibuka lagi, biar posisi user tetap presis di atas section Experiences
+    // selama proses reveal (title settle, garis, list fade-in) berlangsung.
+    window.globalLenis?.start()
 
     const context = gsap.context(() => {
       gsap.set(titleRef.current, { opacity: 1 })
@@ -376,6 +392,13 @@ function Experiences({ active = false, onBack, setNavbarVisible, scrollerRef }) 
           </div>
         </div>
       </div>
+
+      {/* Halaman 3: Next Journey (Menuju seksi Summary) */}
+      <NextJourneyExperiences 
+        active={active && startProjectsAnim} 
+        onNavigate={onNextJourney} 
+        showCue={showNextJourneyCue}
+      />
 
       {/* Grid Animasi Kinetic Text Grid (Appear Text) */}
       {active && !kineticComplete && (

@@ -6,7 +6,7 @@ import ScrollCue from '../hero/ScrollCue'
 
 gsap.registerPlugin(ScrollTrigger)
 
-function NextJourney({ active = false, onNavigate }) {
+function NextJourneyExperiences({ active = false, onNavigate, scrollerRef, showCue = true }) {
   const sectionRef = useRef(null)
   const titleRef = useRef(null)
   const buttonTriggerRef = useRef(null)
@@ -27,6 +27,7 @@ function NextJourney({ active = false, onNavigate }) {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
+          scroller: scrollerRef?.current || window,
           start: 'top 65%',
           toggleActions: 'play none none reset',
         },
@@ -55,6 +56,7 @@ function NextJourney({ active = false, onNavigate }) {
         opacity: 0,
         scrollTrigger: {
           trigger: sectionRef.current,
+          scroller: scrollerRef?.current || window,
           start: 'bottom 98%',
           end: 'bottom 88%',
           scrub: true,
@@ -64,9 +66,19 @@ function NextJourney({ active = false, onNavigate }) {
     }, sectionRef)
 
     return () => context.revert()
-  }, [active])
+  }, [active, scrollerRef])
 
-  // 2. Magnetic Hover Effect (Persis seperti Logo/Icon Navbar)
+  // Animasikan opacity scroll cue secara dinamis ketika showCue berubah
+  useEffect(() => {
+    if (!active) return
+    gsap.to(scrollCueRef.current, {
+      opacity: showCue ? 1 : 0,
+      duration: 0.4,
+      ease: 'power2.out',
+    })
+  }, [showCue, active])
+
+  // 2. Magnetic Hover Effect
   const handleMouseMove = (e) => {
     const trigger = buttonTriggerRef.current
     if (!trigger) return
@@ -104,21 +116,21 @@ function NextJourney({ active = false, onNavigate }) {
   return (
     <section
       ref={sectionRef}
-      id="next-journey"
+      id="next-journey-projects"
       className="relative z-20 flex h-screen w-full items-center justify-center overflow-hidden bg-transparent py-24 text-maroon"
     >
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-12 md:gap-32 px-6 max-w-6xl mx-auto w-full">
-        {/* Teks "Still Curious ?" di Sebelah Kiri (Stacked 2 Baris untuk Keseimbangan Visual) */}
+        {/* Teks "What's Next ?" di Sebelah Kiri */}
         <h2
           ref={titleRef}
-          className="font-display text-5xl md:text-7xl font-bold uppercase tracking-widest text-maroon select-none text-center md:text-left leading-[1.1] whitespace-pre-line"
+          className="font-display text-5xl md:text-7xl font-bold uppercase tracking-widest text-[#4A1620] select-none text-center md:text-left leading-[1.1] whitespace-pre-line"
         >
-          Still
+          What's
           <br className="hidden md:block" />
-          Curious?
+          Next?
         </h2>
 
-        {/* Area Trigger Magnetic Tombol Bulat Raksasa di Sebelah Kanan (Persis Screenshot) */}
+        {/* Area Trigger Magnetic Tombol Bulat Raksasa di Sebelah Kanan */}
         <div
           ref={buttonTriggerRef}
           onMouseMove={handleMouseMove}
@@ -132,31 +144,30 @@ function NextJourney({ active = false, onNavigate }) {
             ref={buttonInnerRef}
             className={`group relative flex h-95 w-95 items-center justify-center rounded-full border transition-all duration-500 shadow-sm focus:outline-none pointer-events-none overflow-hidden ${
               isHovered 
-                ? 'bg-maroon border-maroon' 
-                : 'bg-transparent border-maroon/20'
+                ? 'bg-[#4A1620] border-[#4A1620]' 
+                : 'bg-transparent border-[#4A1620]/20'
             }`}
             style={{ willChange: 'transform' }}
           >
-            {/* 1. Giant Background Text3DFlip (Hanya Muncul Saat Hovered - Fades & Scales In) */}
+            {/* 1. Giant Background Text3DFlip */}
             <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-500 ${
               isHovered ? 'opacity-[0.10] scale-100' : 'opacity-0 scale-95'
             }`}>
-              {/* Squeeze width (scaleX 0.85) and stretch height (scaleY 1.15) */}
               <div 
                 style={{ transform: 'scaleX(0.85) scaleY(1.15)', transformOrigin: 'center center' }} 
                 className="whitespace-nowrap"
               >
                 <Text3DFlip
-                  text="Scroll Down"
+                  text="Summary"
                   font={{
                     fontFamily: '"Playball", cursive',
-                    fontWeight: 400,
-                    fontSize: "70px",
+                    fontWeight: 600,
+                    fontSize: "64px",
                     lineHeight: "1em",
                     textAlign: "center",
                   }}
-                  color={isHovered ? "#F0E4C8" : "#4A1620"}
-                  flipColor="#F0E4C8"
+                  color={isHovered ? "#F8F1DC" : "#4A1620"}
+                  flipColor="#F8F1DC"
                   isHovered={isHovered}
                   animation="hover"
                   staggerDuration={0.03}
@@ -164,10 +175,10 @@ function NextJourney({ active = false, onNavigate }) {
               </div>
             </div>
 
-            {/* 2. Smaller Foreground Text3DFlip (Sejajar dan Centered Sempurna) */}
+            {/* 2. Smaller Foreground Text3DFlip */}
             <div className="relative z-10 flex items-center justify-center w-full px-4">
               <Text3DFlip
-                text="SCROLL DOWN"
+                text="SUMMARY"
                 font={{
                   fontFamily: "Archivo, sans-serif",
                   fontWeight: 700,
@@ -176,8 +187,8 @@ function NextJourney({ active = false, onNavigate }) {
                   lineHeight: "1.1em",
                   textAlign: "center",
                 }}
-                color={isHovered ? "#F0E4C8" : "#4A1620"}
-                flipColor="#F0E4C8"
+                color={isHovered ? "#F8F1DC" : "#4A1620"}
+                flipColor="#F8F1DC"
                 isHovered={isHovered}
                 animation="hover"
               />
@@ -186,12 +197,11 @@ function NextJourney({ active = false, onNavigate }) {
         </div>
       </div>
 
-      {/* Petunjuk scroll untuk user ke transisi luar angkasa */}
       <div ref={scrollCueRef} className="pointer-events-none">
-        <ScrollCue visible={active} light={true} disableScrollTrigger={true} />
+        <ScrollCue visible={active && showCue} light={true} disableScrollTrigger={true} />
       </div>
     </section>
   )
 }
 
-export default NextJourney
+export default NextJourneyExperiences

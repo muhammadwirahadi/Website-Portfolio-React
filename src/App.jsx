@@ -14,6 +14,7 @@ import ShootingStars from './components/about/ShootingStars'
 import NextJourney from './components/about/NextJourney'
 import SpaceTransitionScroll from './components/experiences/SpaceTransitionScroll'
 import Experiences from './components/experiences/Experiences'
+import SummarySpaceTransition from './components/summary/SummarySpaceTransition'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -80,6 +81,22 @@ function App() {
     }
   }
 
+  const handleScrollToSummary = () => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#summary', { duration: 3.0 })
+    }
+  }
+
+  const handleScrollBackToExperiences = () => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo('#next-journey-projects', { duration: 3.0 })
+    }
+  }
+
+  const handleScrollToContact = () => {
+    console.log("Navigating to Contact star (Mesarthim)...")
+  }
+
   // Initialize Lenis smooth scroll with heavier/smoother inertial scroll speed
   useEffect(() => {
     const lenis = new Lenis({
@@ -93,6 +110,7 @@ function App() {
     })
 
     lenisRef.current = lenis
+    window.globalLenis = lenis
 
     lenis.on('scroll', ScrollTrigger.update)
 
@@ -359,7 +377,21 @@ function App() {
         setLightTheme={setLightTheme}
         setNavbarScrolled={setNavbarScrolled}
         setShowShootingStars={setShowShootingStars}
+        onNextJourney={handleScrollToSummary}
       />
+
+      {/* Space Transition & Summary Section (Scroll Pinned) */}
+      <div className="-mt-1 bg-maroon">
+        <SummarySpaceTransition 
+          active={introComplete}
+          onBack={handleScrollBackToExperiences}
+          setNavbarVisible={setNavbarVisible}
+          setLightTheme={setLightTheme}
+          setNavbarScrolled={setNavbarScrolled}
+          setShowShootingStars={setShowShootingStars}
+          onNextJourney={handleScrollToContact}
+        />
+      </div>
     </main>
   )
 }
