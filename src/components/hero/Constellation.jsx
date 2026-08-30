@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 
 // Posisi 4 bintang utama Aries mengikuti bentuk rasi yang sebenarnya (pola
@@ -144,7 +144,7 @@ function Constellation({ className = '', onIntroComplete }) {
   const twinkleTweensRef = useRef([])
   const isScrollingRef = useRef(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = containerRef.current
     const lines = root.querySelectorAll('[data-line]')
     const constellationStars = root.querySelectorAll('[data-star]')

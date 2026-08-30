@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useLayoutEffect } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -11,7 +11,9 @@ function ScrollCue({ visible = false, light = false, disableScrollTrigger = fals
   const rootRef = useRef(null)
   const dotRef = useRef(null)
 
-  useEffect(() => {
+  // useLayoutEffect - biar kesembunyiin sebelum browser sempat nge-paint
+  // frame pertama (hindari flash kelihatan penuh sesaat pas refresh).
+  useLayoutEffect(() => {
     gsap.set(rootRef.current, { opacity: 0, y: 10 })
   }, [])
 

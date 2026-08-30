@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useLayoutEffect } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -85,8 +85,13 @@ function Navbar({ visible = false, light = false, isScrolled = false }) {
     })
   }
 
-  // Animasi Navbar Visibility (kontrol opacity & y saat App loading)
-  useEffect(() => {
+  // Animasi Navbar Visibility (kontrol opacity & y saat App loading) - pakai
+  // useLayoutEffect (bukan useEffect biasa) supaya navbar udah kesembunyiin
+  // SEBELUM browser sempat nge-paint frame pertama. Kalau pakai useEffect
+  // biasa, ada jeda sepersekian detik di mana navbar sempat kelihatan penuh
+  // dulu (kondisi default HTML/CSS) sebelum di-set opacity 0 - keliatan
+  // sebagai "kedipan" pas refresh halaman.
+  useLayoutEffect(() => {
     gsap.set(navRef.current, { opacity: 0, y: -16, pointerEvents: 'none' })
   }, [])
 
